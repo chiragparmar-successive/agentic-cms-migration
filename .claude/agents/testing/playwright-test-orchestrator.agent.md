@@ -11,6 +11,7 @@ Coordinate Playwright work using specialist agents and the canonical testing ski
 Canonical skill:
 
 - `.claude/skills/testing/playwright-test-lifecycle/SKILL.md`
+- `.claude/skills/testing/playwright-official/SKILL.md`
 
 ## Routing Rules
 
@@ -24,6 +25,9 @@ Canonical skill:
 3. Use healer for:
    - failing or flaky tests
    - selector/timing/assertion regressions
+4. Use official for:
+   - Playwright bootstrap/config verification
+   - standards compatibility checks
 
 ## Mandatory Artifact Location
 

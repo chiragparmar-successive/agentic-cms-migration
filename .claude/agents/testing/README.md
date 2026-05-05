@@ -11,12 +11,14 @@ Testing agents use a hub-and-spoke model:
 - `playwright-test-planner.agent.md`
 - `playwright-test-generator.agent.md`
 - `playwright-test-healer.agent.md`
+- `playwright-official.agent.md`
 
 ## Canonical Skill Dependency
 
 All testing agents depend on:
 
 - `.claude/skills/testing/playwright-test-lifecycle/SKILL.md`
+- `.claude/skills/testing/playwright-official/SKILL.md`
 
 ## Mandatory Output Location
 
@@ -37,3 +39,4 @@ Do not create root-level `test-results/` or `playwright-report/` for site-specif
 - Planning request -> planner
 - Test creation request -> generator
 - Failing/flaky test request -> healer
+- Playwright standards/bootstrap request -> official
