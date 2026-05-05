@@ -4,4 +4,4 @@
 
 Depends on:
 
-- `.claude/skills/frontend/frontend-generator/SKILL.md`
+- `.claude/skills/frontend/frontend-builder/SKILL.md`

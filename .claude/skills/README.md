@@ -7,66 +7,51 @@ Use this layout to keep skills modular, discoverable, and easy to compose.
 ```text
 .claude/skills/
   README.md
+  playwright-cli/                # standalone CLI reference (not in lifecycle chain)
+    SKILL.md
+    references/
   orchestrators/
-    fullstack-master-builder/
-      SKILL.md
-    turborepo/
-      SKILL.md
+    fullstack-builder/
+      SKILL.md                   # plan -> CMS -> frontend -> test/heal loop
   frontend/
-    frontend-generator/
-      SKILL.md
-    vercel/
+    frontend-builder/
+      SKILL.md                   # canonical Next.js implementation flow
+    vercel/                      # vendored Vercel skill packs (read-only)
       vercel-react-best-practices/
-        AGENTS.md
+        SKILL.md
+        AGENTS.md                # compiled long-form reference
+        rules/
       vercel-composition-patterns/
         SKILL.md
+        AGENTS.md
+        rules/
       next-best-practices/
         SKILL.md
+        *.md                     # topic pages referenced by SKILL.md
       next-cache-components/
         SKILL.md
       cra-to-next-migration/
         SKILL.md
+        rules/
   cms/
     cms-generator/
-      SKILL.md
+      SKILL.md                   # Strapi schema + seed (no frontend)
   testing/
+    playwright-official/
+      SKILL.md                   # official Playwright baseline wrapper
     playwright-test-lifecycle/
-      SKILL.md
+      SKILL.md                   # plan / generate / heal modes
 ```
-
-## Optional Future Split Targets
-
-Use these only when complexity demands additional decomposition.
-
-- `frontend/foundation-extractor`
-- `frontend/section-builder`
-- `frontend/qa-diff-checker`
-- `cms/model-designer`
-- `cms/schema-implementer`
-- `cms/seed-and-verify`
 
 ## Practical Rules For Skill Splitting
 
 - Keep one clear responsibility per skill (single phase or lifecycle segment).
-- Split when a skill exceeds about 300-400 lines OR mixes extraction, implementation, and QA in one file.
+- Split when a skill exceeds ~300-400 lines OR mixes extraction, implementation, and QA in one file.
 - Keep orchestrators thin: they coordinate child skills, verify contracts, and report readiness.
-- Put reusable prompts/templates in `_shared/` so domain skills stay short.
 - Prefer domain folders (`frontend`, `cms`, `orchestrators`) over feature-name sprawl.
-- Exception: keep a single lifecycle skill when modes are tightly coupled and share the same conventions/toolchain.
-- Keep vendor/framework guidance isolated in subfolders (for example `frontend/vercel`) so core orchestration remains stable.
+- Exception: keep a single lifecycle skill when modes are tightly coupled and share the same conventions/toolchain (e.g. `playwright-test-lifecycle`).
+- Keep vendor/framework guidance isolated in subfolders (e.g. `frontend/vercel/`) so core orchestration remains stable.
 
-## Current-to-Target Mapping
+## Vendored Skills
 
-- `fullstack-master-builder` -> target home: `orchestrators/fullstack-master-builder`
-- `frontend/frontend-generator` -> keep as primary frontend orchestration skill
-- `cms/cms-generator` -> keep as primary CMS orchestration skill
-
-## Minimal Next Split (If Needed)
-
-If you want immediate maintainability gains, split in this order:
-
-1. `frontend-generator` -> `foundation-extractor`, `section-builder`, `qa-diff-checker`
-2. `cms-generator` -> `model-designer`, `schema-implementer`, `seed-and-verify`
-3. Keep `fullstack-master-builder` as a coordinator only
-
-This gives better reuse, parallelization, and easier prompt maintenance without changing behavior.
+Skills under `frontend/vercel/` are vendored read-only copies tracked by `skills-lock.json` at the repo root. To re-sync, run the upstream build (`pnpm install && pnpm build`) in the source repo and copy the resulting `SKILL.md`, `AGENTS.md`, and `rules/` back into the matching folder here, then update the hash in `skills-lock.json`.

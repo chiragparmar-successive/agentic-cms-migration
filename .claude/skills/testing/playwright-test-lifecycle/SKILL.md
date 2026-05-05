@@ -202,7 +202,7 @@ Purpose: generate one scenario test file from plan steps.
 
 Workflow:
 
-1. Review `AGENTS.md` and scenario requirements.
+1. Review the scenario requirements from the saved plan at `output/<site>/test/specs/ui-complete-plan.md` and the conventions in this SKILL.md.
 2. Run `generator_setup_page` for scenario initialization.
 3. Execute each scenario step and verification via browser tools.
 4. Read execution logs using `generator_read_log`.
@@ -327,9 +327,9 @@ For content-rich Japanese travel portals with mixed JP/EN UI:
 
 ## Reference Docs
 
-- `AGENTS.md`
-- `.ai/instructions/typescript.md`
-- `.ai/instructions/testing.md`
-- `.ai/instructions/page-objects.md`
-- `.ai/instructions/imports-reference.md`
-- `@utils/core/errors.ts`
+- `.claude/skills/testing/playwright-official/SKILL.md` — official Playwright baseline this lifecycle stays compatible with
+- `.claude/skills/playwright-cli/SKILL.md` — interactive browser-CLI reference for ad-hoc planning/debugging
+- `.claude/skills/playwright-cli/references/spec-driven-testing.md` — supplementary plan/generate/heal CLI workflow
+- `.claude/skills/playwright-cli/references/playwright-tests.md` — running and debugging Playwright tests via CLI
+
+When the Playwright Enterprise Framework is the host project, also follow its in-repo conventions for path aliases (e.g. `@fixtures/*`, `@utils/*`, `@config/*`), TypeScript style, and logger usage; these aren't shipped with this skill but are required by rules 1–4 above when those aliases exist.

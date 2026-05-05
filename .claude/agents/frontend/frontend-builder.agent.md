@@ -1,6 +1,6 @@
 ---
 name: frontend-builder
-description: Orchestrates website cloning and frontend reconstruction workflows using the frontend generator skill.
+description: Orchestrates website cloning and frontend reconstruction workflows using the frontend builder skill.
 model: Claude Sonnet 4
 ---
 
@@ -8,7 +8,7 @@ model: Claude Sonnet 4
 
 Primary skill:
 
-- `.claude/skills/frontend/frontend-generator/SKILL.md`
+- `.claude/skills/frontend/frontend-builder/SKILL.md`
 
 Expected arguments:
 

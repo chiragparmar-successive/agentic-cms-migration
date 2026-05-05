@@ -1,6 +1,6 @@
 ---
 name: cms-generator
-description: Reverse-engineer content models from a live website and generate Strapi schema definitions plus corresponding React/Next.js UI components. Extracts content structure, relationships, and metadata from one page URL plus an optional sitemap, then initializes a Strapi project with fully-configured content types and starter components. Use this when you want to scaffold a headless CMS setup from an existing website. Requires one argument (target URL) and accepts an optional second argument (sitemap URL).
+description: Reverse-engineer the content model of a live website and generate a Strapi headless CMS in `/cms` (schema, content types, components, seed content, and docs). Extracts content structure, relationships, and metadata from one page URL plus an optional sitemap. Frontend rendering is owned by `frontend-builder`; this skill only produces the CMS. Requires one argument (target URL) and accepts an optional second argument (sitemap URL).
 argument-hint: "<url> [sitemap-url]"
 user-invocable: true
 ---
@@ -63,11 +63,9 @@ The target scope is all in-scope pages discovered from `$ARGUMENTS[1]` when prov
 - **Content extraction:** All text, media, relationships, and structured data visible on pages
 - **Content fidelity:** Preserve exact source copy for modeled content fields (headings, paragraphs, labels, CTA text, metadata, alt text) unless normalization requires structural decomposition only
 - **Data modeling:** Normalized Strapi collection types (reusable content models) plus single types (unique pages like homepage, about)
-- **Component generation:** React/Next.js components with TypeScript that fetch and render from Strapi API
-- **Backend:** Strapi v4+ with SQLite (development) and PostgreSQL configuration template
-- **Frontend:** Next.js 14+ with App Router, TypeScript, and API route integration
-- **In scope:** Content structure, data relationships, taxonomy, media assets
-- **Out of scope:** User authentication (initially), real database data population, payment integration
+- **Backend:** Strapi v4+ with SQLite (development) and a PostgreSQL configuration template
+- **In scope:** Content structure, data relationships, taxonomy, media assets, content-type schemas, controllers/routes/services, seed/demo content, schema and API docs
+- **Out of scope:** Frontend rendering and Next.js components (owned by `frontend-builder`), user authentication (initially), real database data population, payment integration
 
 If the user provides additional instructions (custom fields, specific integrations, modified data structure), honor those over the defaults.
 
@@ -1216,191 +1214,12 @@ Use placeholder/demo text only when extraction is impossible, and mark those fie
 
 ### Create Seed Script
 
-Create `/cms/scripts/seed-demo-data.ts`:
-
-```typescript
-import { getStrapiData } from '@/lib/strapi';
-import Image from 'next/image';
-import Link from 'next/link';
-
-export interface BlogPostProps {
-  post: any; // Would be BlogPost type from generated types
-}
-
-export async function BlogPostCard({ post }: BlogPostProps) {
-  const { attributes } = post;
-
-  return (
-    <article className="border rounded-lg overflow-hidden hover:shadow-lg transition">
-      {attributes.featuredImage?.data && (
-        <Image
-          src={`${process.env.NEXT_PUBLIC_STRAPI_URL}${attributes.featuredImage.data.attributes.url}`}
-          alt={attributes.featuredImage.data.attributes.alternativeText || attributes.title}
-          width={400}
-          height={300}
-          className="w-full h-48 object-cover"
-        />
-      )}
-      <div className="p-4">
-        <h3 className="text-xl font-bold mb-2">{attributes.title}</h3>
-        <p className="text-gray-600 mb-3">{attributes.excerpt}</p>
-
-        <div className="flex items-center gap-2 mb-3">
-          {attributes.author?.data && (
-            <span className="text-sm text-gray-500">
-              By {attributes.author.data.attributes.name}
-            </span>
-          )}
-          {attributes.publishedAt && (
-            <time className="text-sm text-gray-500">
-              {new Date(attributes.publishedAt).toLocaleDateString()}
-            </time>
-          )}
-        </div>
-
-        {attributes.tags?.data?.length > 0 && (
-          <div className="flex gap-2 mb-3">
-            {attributes.tags.data.map((tag: any) => (
-              <span key={tag.id} className="text-xs bg-gray-100 px-2 py-1 rounded">
-                {tag.attributes.name}
-              </span>
-            ))}
-          </div>
-        )}
-
-        <Link href={`/blog/${attributes.slug}`} className="text-blue-600 hover:underline">
-          Read more →
-        </Link>
-      </div>
-    </article>
-  );
-}
-
-export async function BlogPostDetail({ slug }: { slug: string }) {
-  const { data } = await getStrapiData(`/api/blog-posts?filters[slug][$eq]=${slug}&populate=*`);
-
-  if (!data?.[0]) return null;
-
-  const post = data[0];
-  const { attributes } = post;
-
-  return (
-    <article className="max-w-2xl mx-auto">
-      <header className="mb-8">
-        <h1 className="text-4xl font-bold mb-4">{attributes.title}</h1>
-
-        <div className="flex items-center gap-4 text-gray-600 mb-6">
-          {attributes.author?.data && (
-            <div>
-              <p className="font-semibold">{attributes.author.data.attributes.name}</p>
-              <p className="text-sm">{attributes.author.data.attributes.role}</p>
-            </div>
-          )}
-          {attributes.publishedAt && (
-            <time>{new Date(attributes.publishedAt).toLocaleDateString()}</time>
-          )}
-        </div>
-
-        {attributes.featuredImage?.data && (
-          <Image
-            src={`${process.env.NEXT_PUBLIC_STRAPI_URL}${attributes.featuredImage.data.attributes.url}`}
-            alt={attributes.title}
-            width={800}
-            height={400}
-            className="w-full rounded-lg mb-8"
-          />
-        )}
-      </header>
-
-      <div className="prose prose-lg max-w-none" dangerouslySetInnerHTML={{ __html: attributes.body }} />
-
-      {attributes.tags?.data?.length > 0 && (
-        <footer className="mt-8 pt-8 border-t">
-          <p className="text-sm text-gray-600 mb-2">Tags:</p>
-          <div className="flex gap-2">
-            {attributes.tags.data.map((tag: any) => (
-              <Link
-                key={tag.id}
-                href={`/blog?tag=${tag.attributes.slug}`}
-                className="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded text-sm"
-              >
-                {tag.attributes.name}
-              </Link>
-            ))}
-          </div>
-        </footer>
-      )}
-    </article>
-  );
-}
-```
-
-### Page Components
-
-Create `frontend/src/app/blog/page.tsx`:
-
-```typescript
-import { getStrapiData } from '@/lib/strapi';
-import { BlogPostCard } from '@/components/BlogPost';
-
-export const metadata = {
-  title: 'Blog',
-  description: 'Latest articles and insights'
-};
-
-export default async function BlogIndex() {
-  const { data: posts } = await getStrapiData(
-    '/api/blog-posts?pagination[pageSize]=10&populate=author,tags,featuredImage&sort=-publishedAt&filters[status][$eq]=published'
-  );
-
-  return (
-    <main className="max-w-6xl mx-auto px-4 py-12">
-      <h1 className="text-4xl font-bold mb-8">Blog</h1>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {posts.map((post: any) => (
-          <BlogPostCard key={post.id} post={post} />
-        ))}
-      </div>
-    </main>
-  );
-}
-```
-
-Create `frontend/src/app/blog/[slug]/page.tsx`:
-
-```typescript
-import { BlogPostDetail } from '@/components/BlogPost';
-
-export default async function BlogPostPage({ params }: { params: { slug: string } }) {
-  return <BlogPostDetail slug={params.slug} />;
-}
-```
-
-### Repeat for All Components
-
-Generate components for:
-
-- TeamMember (list + detail)
-- Feature (card + featured section)
-- Testimonial (carousel)
-- Project (portfolio grid + detail)
-- HomePage
-- AboutPage
-- PricingPage
-
-Each component must:
-
-- Fetch data from Strapi API using `getStrapiData()`
-- Handle image display with `next/image`
-- Include TypeScript types from generated Strapi types
-- Use Tailwind CSS for styling
-- Follow Next.js App Router conventions
+Create `/cms/scripts/seed-demo-data.ts`. Prefer real extracted content over generic demo copy; fall back to demo copy only when the source page could not be read.
 
 ```typescript
 import fetch from "node-fetch";
 
-const STRAPI_URL = "http://localhost:1337";
+const STRAPI_URL = process.env.STRAPI_URL ?? "http://localhost:1337";
 
 async function seedDemoData() {
   // Create categories
@@ -1626,16 +1445,10 @@ DATABASE_USERNAME=<your-user>
 DATABASE_PASSWORD=<your-password>
 ```
 
-## Frontend Integration (Optional Next Step)
+## Frontend Integration (Out of Scope)
 
-Once `/cms` is set up and running, you can create a frontend consumer:
+Frontend rendering is owned by `frontend-builder`:
 
-```bash
-# Create a Next.js frontend that consumes the CMS
-npx create-next-app@latest frontend --typescript --app --tailwind
+- `.claude/skills/frontend/frontend-builder/SKILL.md`
 
-# In frontend, create API client pointing to /cms:
-# src/lib/strapi.ts with NEXT_PUBLIC_STRAPI_URL=http://localhost:1337
-```
-
-See the Strapi Schema Generator Phase 5 for frontend component templates.
+When this CMS is wired into a Next.js app, that work happens in `frontend-builder` (typed API client, route pages, components, Vercel quality gates). Coordinate both skills via the orchestrator at `.claude/skills/orchestrators/fullstack-builder/SKILL.md`.

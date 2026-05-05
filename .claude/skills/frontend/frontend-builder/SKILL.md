@@ -11,7 +11,7 @@ Generate or refine a Next.js frontend that matches extracted design/content and 
 
 This skill is the canonical frontend implementation flow and MUST remain compatible with:
 
-- `.claude/skills/orchestrators/fullstack-master-builder/SKILL.md`
+- `.claude/skills/orchestrators/fullstack-builder/SKILL.md`
 - `.claude/skills/cms/cms-generator/SKILL.md`
 
 ## Mandatory Vercel Augmentation

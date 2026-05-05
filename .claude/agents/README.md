@@ -14,6 +14,7 @@ Use this structure for agent orchestration:
   testing/
     README.md
     playwright-test-orchestrator.agent.md
+    playwright-official.agent.md
     playwright-test-planner.agent.md
     playwright-test-generator.agent.md
     playwright-test-healer.agent.md

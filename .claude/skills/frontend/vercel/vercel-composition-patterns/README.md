@@ -1,60 +1,56 @@
 # React Composition Patterns
 
-A structured repository for React composition patterns that scale. These
-patterns help avoid boolean prop proliferation by using compound components,
-lifting state, and composing internals.
+Vendored copy of the Vercel Composition Patterns skill, adapted for use inside this workspace.
 
-## Structure
+This is a **read-only reference skill** — no build pipeline runs here. The upstream repo (`vercel-labs/agent-skills`) ships a `pnpm`-based generator that compiles `rules/` into `AGENTS.md`; we keep only the resulting artifacts and consume them directly.
 
-- `rules/` - Individual rule files (one per rule)
-  - `_sections.md` - Section metadata (titles, impacts, descriptions)
-  - `_template.md` - Template for creating new rules
-  - `area-description.md` - Individual rule files
-- `metadata.json` - Document metadata (version, organization, abstract)
-- **`AGENTS.md`** - Compiled output (generated)
+## Files in this skill
+
+- `SKILL.md` — short, prioritized rule index used by agents (entry point)
+- `AGENTS.md` — full compiled guide with all rules expanded (reference doc)
+- `rules/` — individual rule files (one per rule, source of truth for `AGENTS.md`)
+  - `_sections.md` — section metadata (titles, impacts, descriptions)
+  - `_template.md` — template for new rules
+  - `<area>-<description>.md` — individual rules
+
+## Rule areas (filename prefixes)
+
+- `architecture-` — Component Architecture (HIGH)
+- `state-` — State Management (MEDIUM)
+- `patterns-` — Implementation Patterns (MEDIUM)
+- `react19-` — React 19 APIs (MEDIUM)
+
+Priority labels match `SKILL.md`. If you change priorities here, update `SKILL.md` (and `_sections.md` upstream) so they stay in sync.
 
 ## Rules
 
-### Component Architecture (CRITICAL)
+### Component Architecture
 
-- `architecture-avoid-boolean-props.md` - Don't add boolean props to customize
-  behavior
-- `architecture-compound-components.md` - Structure as compound components with
-  shared context
+- `architecture-avoid-boolean-props.md` — don't add boolean props to customize behavior
+- `architecture-compound-components.md` — structure complex components with shared context
 
-### State Management (HIGH)
+### State Management
 
-- `state-lift-state.md` - Lift state into provider components
-- `state-context-interface.md` - Define clear context interfaces
-  (state/actions/meta)
-- `state-decouple-implementation.md` - Decouple state management from UI
+- `state-lift-state.md` — move state into provider components for sibling access
+- `state-context-interface.md` — define a generic interface (state, actions, meta)
+- `state-decouple-implementation.md` — providers are the only place that knows how state is managed
 
-### Implementation Patterns (MEDIUM)
+### Implementation Patterns
 
-- `patterns-children-over-render-props.md` - Prefer children over renderX props
-- `patterns-explicit-variants.md` - Create explicit component variants
+- `patterns-children-over-render-props.md` — prefer children over render-X props
+- `patterns-explicit-variants.md` — create explicit variant components instead of boolean toggles
+
+### React 19 APIs
+
+- `react19-no-forwardref.md` — `forwardRef` is no longer required in React 19
 
 ## Core Principles
 
-1. **Composition over configuration** — Instead of adding props, let consumers
-   compose
-2. **Lift your state** — State in providers, not trapped in components
-3. **Compose your internals** — Subcomponents access context, not props
-4. **Explicit variants** — Create ThreadComposer, EditComposer, not Composer
-   with isThread
+1. **Composition over configuration** — instead of adding props, let consumers compose.
+2. **Lift your state** — keep state in providers, not trapped in components.
+3. **Compose your internals** — subcomponents access context, not props.
+4. **Explicit variants** — prefer `ThreadComposer` / `EditComposer` over a single `Composer` with `isThread`.
 
-## Creating a New Rule
+## Re-syncing from upstream
 
-1. Copy `rules/_template.md` to `rules/area-description.md`
-2. Choose the appropriate area prefix:
-   - `architecture-` for Component Architecture
-   - `state-` for State Management
-   - `patterns-` for Implementation Patterns
-3. Fill in the frontmatter and content
-4. Ensure you have clear examples with explanations
-
-## Impact Levels
-
-- `CRITICAL` - Foundational patterns, prevents unmaintainable code
-- `HIGH` - Significant maintainability improvements
-- `MEDIUM` - Good practices for cleaner code
+Update upstream with `pnpm install && pnpm build`, then copy `SKILL.md`, `AGENTS.md`, and `rules/` into this folder. `skills-lock.json` at the repo root tracks the upstream source and content hash.
