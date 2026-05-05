@@ -49,7 +49,10 @@ You MUST:
 1. Verify dependent skills exist and are readable:
    - `.claude/skills/testing/playwright-test-lifecycle/SKILL.md`
    - `.claude/skills/cms/cms-generator/SKILL.md`
-   - `.claude/skills/frontend/frontend-generator/SKILL.md` (contains `name: frontend-builder`)
+   - `.claude/skills/frontend/frontend-builder/SKILL.md` (contains `name: frontend-builder`)
+   - `.claude/skills/frontend/vercel/next-best-practices/SKILL.md`
+   - `.claude/skills/frontend/vercel/vercel-react-best-practices/SKILL.md`
+   - `.claude/skills/frontend/vercel/vercel-composition-patterns/SKILL.md`
 2. Verify browser automation MCP is available before reverse engineering.
 3. Validate URL argument(s).
 4. Define a project slug from target hostname (or user-provided name).
@@ -101,6 +104,12 @@ Required backend checks:
 ## Phase 4: Build Frontend (Next.js)
 
 Follow `frontend-builder` instructions for page structure and visual rebuild.
+Before implementation, apply Vercel skill packs as mandatory quality gates:
+
+1. `next-best-practices` for Next.js architecture/runtime/file conventions.
+2. `vercel-react-best-practices` for performance, waterfalls, bundle control, and rerender hygiene.
+3. `vercel-composition-patterns` for scalable component API design.
+4. `next-cache-components` where Next.js 16 cache components are enabled.
 
 Then enforce integration changes:
 
@@ -121,6 +130,11 @@ Required frontend checks:
 - `npm run build`
 - `npm run dev` starts cleanly
 - No unresolved API runtime errors in server/client logs
+- No blocking violations against Vercel quality gates:
+  - RSC/server-client boundary correctness
+  - async/data waterfall prevention
+  - bundle and script loading strategy
+  - image/font optimization patterns
 
 ## Phase 5: API Connection Validation
 
@@ -194,6 +208,7 @@ Do not mark complete until all are true:
 - [ ] Start commands documented for both apps
 - [ ] Required Playwright suites pass (no blocking failures)
 - [ ] Final analytics report is delivered
+- [ ] Vercel frontend quality gates applied and validated
 
 ## Required Deliverables
 
