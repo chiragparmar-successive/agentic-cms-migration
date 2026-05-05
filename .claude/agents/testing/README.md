@@ -43,4 +43,4 @@ Do not create root-level `test-results/` or `playwright-report/` for site-specif
 
 ## Supplementary Reference
 
-- `.claude/skills/playwright-cli/SKILL.md` — standalone interactive browser-CLI toolkit (ad-hoc exploration, locator generation, request mocking, tracing). Not part of the planner -> generator -> healer chain; consult only when an agent needs interactive CLI-driven debugging.
+- `.claude/skills/testing/playwright-cli/SKILL.md` — standalone interactive browser-CLI toolkit (ad-hoc exploration, locator generation, request mocking, tracing). Not part of the planner -> generator -> healer chain; consult only when an agent needs interactive CLI-driven debugging.

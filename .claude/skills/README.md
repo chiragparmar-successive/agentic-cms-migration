@@ -7,9 +7,6 @@ Use this layout to keep skills modular, discoverable, and easy to compose.
 ```text
 .claude/skills/
   README.md
-  playwright-cli/                # standalone CLI reference (not in lifecycle chain)
-    SKILL.md
-    references/
   orchestrators/
     fullstack-builder/
       SKILL.md                   # plan -> CMS -> frontend -> test/heal loop
@@ -37,6 +34,9 @@ Use this layout to keep skills modular, discoverable, and easy to compose.
     cms-generator/
       SKILL.md                   # Strapi schema + seed (no frontend)
   testing/
+    playwright-cli/              # standalone CLI reference (not in lifecycle chain)
+      SKILL.md
+      references/
     playwright-official/
       SKILL.md                   # official Playwright baseline wrapper
     playwright-test-lifecycle/

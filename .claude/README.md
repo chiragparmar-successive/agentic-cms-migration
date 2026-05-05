@@ -28,9 +28,6 @@ This folder is organized into two layers:
       playwright-test-healer.agent.md
   skills/
     README.md
-    playwright-cli/
-      SKILL.md
-      references/                # standalone CLI reference docs
     orchestrators/
       fullstack-builder/
         SKILL.md
@@ -58,6 +55,9 @@ This folder is organized into two layers:
       cms-generator/
         SKILL.md
     testing/
+      playwright-cli/
+        SKILL.md
+        references/              # standalone CLI reference docs
       playwright-official/
         SKILL.md
       playwright-test-lifecycle/
@@ -71,4 +71,4 @@ This folder is organized into two layers:
 - Keep specialist agents thin; keep framework rules in skills.
 - Prefer one canonical skill per tightly-coupled lifecycle.
 - Vercel guidance lives under `skills/frontend/vercel/` and augments existing flows without replacing orchestrators.
-- The `skills/playwright-cli/` skill is a standalone CLI reference; it is not part of the planner -> generator -> healer chain but can be consulted for interactive browser automation.
+- The `skills/testing/playwright-cli/` skill is a standalone CLI reference; it is not part of the planner -> generator -> healer chain but can be consulted for interactive browser automation.

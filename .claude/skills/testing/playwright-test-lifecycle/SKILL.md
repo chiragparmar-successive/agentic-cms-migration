@@ -328,8 +328,8 @@ For content-rich Japanese travel portals with mixed JP/EN UI:
 ## Reference Docs
 
 - `.claude/skills/testing/playwright-official/SKILL.md` — official Playwright baseline this lifecycle stays compatible with
-- `.claude/skills/playwright-cli/SKILL.md` — interactive browser-CLI reference for ad-hoc planning/debugging
-- `.claude/skills/playwright-cli/references/spec-driven-testing.md` — supplementary plan/generate/heal CLI workflow
-- `.claude/skills/playwright-cli/references/playwright-tests.md` — running and debugging Playwright tests via CLI
+- `.claude/skills/testing/playwright-cli/SKILL.md` — interactive browser-CLI reference for ad-hoc planning/debugging
+- `.claude/skills/testing/playwright-cli/references/spec-driven-testing.md` — supplementary plan/generate/heal CLI workflow
+- `.claude/skills/testing/playwright-cli/references/playwright-tests.md` — running and debugging Playwright tests via CLI
 
 When the Playwright Enterprise Framework is the host project, also follow its in-repo conventions for path aliases (e.g. `@fixtures/*`, `@utils/*`, `@config/*`), TypeScript style, and logger usage; these aren't shipped with this skill but are required by rules 1–4 above when those aliases exist.
