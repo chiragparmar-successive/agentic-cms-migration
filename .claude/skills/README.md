@@ -10,9 +10,22 @@ Use this layout to keep skills modular, discoverable, and easy to compose.
   orchestrators/
     fullstack-master-builder/
       SKILL.md
+    turborepo/
+      SKILL.md
   frontend/
     frontend-generator/
       SKILL.md
+    vercel/
+      vercel-react-best-practices/
+        AGENTS.md
+      vercel-composition-patterns/
+        SKILL.md
+      next-best-practices/
+        SKILL.md
+      next-cache-components/
+        SKILL.md
+      cra-to-next-migration/
+        SKILL.md
   cms/
     cms-generator/
       SKILL.md
@@ -40,6 +53,7 @@ Use these only when complexity demands additional decomposition.
 - Put reusable prompts/templates in `_shared/` so domain skills stay short.
 - Prefer domain folders (`frontend`, `cms`, `orchestrators`) over feature-name sprawl.
 - Exception: keep a single lifecycle skill when modes are tightly coupled and share the same conventions/toolchain.
+- Keep vendor/framework guidance isolated in subfolders (for example `frontend/vercel`) so core orchestration remains stable.
 
 ## Current-to-Target Mapping
 

@@ -30,9 +30,22 @@ This folder is organized into two layers:
     orchestrators/
       fullstack-master-builder/
         SKILL.md
+      turborepo/
+        SKILL.md
     frontend/
       frontend-generator/
         SKILL.md
+      vercel/
+        vercel-react-best-practices/
+          AGENTS.md
+        vercel-composition-patterns/
+          SKILL.md
+        next-best-practices/
+          SKILL.md
+        next-cache-components/
+          SKILL.md
+        cra-to-next-migration/
+          SKILL.md
     cms/
       cms-generator/
         SKILL.md
@@ -47,3 +60,4 @@ This folder is organized into two layers:
 - Add workflow routers under `agents/<domain>/`.
 - Keep specialist agents thin; keep framework rules in skills.
 - Prefer one canonical skill per tightly-coupled lifecycle.
+- Vercel guidance lives under `skills/frontend/vercel/` and augments existing flows without replacing orchestrators.
