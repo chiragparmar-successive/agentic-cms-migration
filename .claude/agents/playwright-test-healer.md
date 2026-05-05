@@ -1,14 +1,14 @@
 ---
 name: playwright-test-healer
 description: Diagnoses and fixes failing Playwright tests through a reproduce-debug-fix-verify loop using resilient test practices.
-model: Claude Sonnet 4
+model: claude-sonnet-4-6
 ---
 
 # Playwright Test Healer Agent
 
 Use skill:
 
-- `.claude/skills/testing/playwright-test-lifecycle/SKILL.md`
+- `.claude/skills/testing/playwright/playwright-test-lifecycle/SKILL.md`
 
 Invoke mode:
 

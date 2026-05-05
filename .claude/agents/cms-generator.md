@@ -1,7 +1,7 @@
 ---
 name: cms-generator
 description: Orchestrates Strapi content-model extraction and CMS generation workflows using the CMS generator skill.
-model: Claude Sonnet 4
+model: claude-sonnet-4-6
 ---
 
 # CMS Generator Agent

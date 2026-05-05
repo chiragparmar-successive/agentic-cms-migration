@@ -1,57 +1,47 @@
-# Skills Folder Structure
+# Skills layout
 
-Use this layout to keep skills modular, discoverable, and easy to compose.
+Skills are grouped by **domain** first, then by **skill name**. Entry point for each skill is always **`SKILL.md`** in its folder.
 
-## Current Active Structure
+## Tree (summary)
 
 ```text
 .claude/skills/
   README.md
-  orchestrators/
-    fullstack-builder/
-      SKILL.md                   # plan -> CMS -> frontend -> test/heal loop
-  frontend/
-    frontend-builder/
-      SKILL.md                   # canonical Next.js implementation flow
-    vercel/                      # vendored Vercel skill packs (read-only)
-      vercel-react-best-practices/
-        SKILL.md
-        AGENTS.md                # compiled long-form reference
-        rules/
-      vercel-composition-patterns/
-        SKILL.md
-        AGENTS.md
-        rules/
-      next-best-practices/
-        SKILL.md
-        *.md                     # topic pages referenced by SKILL.md
-      next-cache-components/
-        SKILL.md
-      cra-to-next-migration/
-        SKILL.md
-        rules/
   cms/
     cms-generator/
-      SKILL.md                   # Strapi schema + seed (no frontend)
-  testing/
-    playwright-cli/              # standalone CLI reference (not in lifecycle chain)
       SKILL.md
-      references/
-    playwright-official/
-      SKILL.md                   # official Playwright baseline wrapper
-    playwright-test-lifecycle/
-      SKILL.md                   # plan / generate / heal modes
+  frontend/
+    frontend-builder/
+      SKILL.md
+    vercel/                         # read-only vendored packs (see skills-lock.json)
+      cra-to-next-migration/
+      next-best-practices/
+      next-cache-components/
+      vercel-composition-patterns/
+      vercel-react-best-practices/
+  orchestrators/
+    fullstack-builder/
+      SKILL.md
+  testing/
+    README.md
+    playwright/
+      playwright-cli/
+        SKILL.md
+        references/
+      playwright-official/
+        SKILL.md
+      playwright-test-lifecycle/
+        SKILL.md
 ```
 
-## Practical Rules For Skill Splitting
+## Splitting and layering
 
-- Keep one clear responsibility per skill (single phase or lifecycle segment).
-- Split when a skill exceeds ~300-400 lines OR mixes extraction, implementation, and QA in one file.
-- Keep orchestrators thin: they coordinate child skills, verify contracts, and report readiness.
-- Prefer domain folders (`frontend`, `cms`, `orchestrators`) over feature-name sprawl.
-- Exception: keep a single lifecycle skill when modes are tightly coupled and share the same conventions/toolchain (e.g. `playwright-test-lifecycle`).
-- Keep vendor/framework guidance isolated in subfolders (e.g. `frontend/vercel/`) so core orchestration remains stable.
+- One clear responsibility per skill (one phase or lifecycle segment).
+- Consider splitting past ~300–400 lines or when extraction + implementation + QA are mixed.
+- Orchestrators stay thin: coordinate child skills, verify contracts, report status.
+- Prefer domain folders (`cms`, `frontend`, `testing`) over many top-level feature names.
+- Keep vendor/framework guidance under `frontend/vercel/` so orchestration and core skills do not churn with upstream packs.
 
-## Vendored Skills
+## Vendored skills
 
-Skills under `frontend/vercel/` are vendored read-only copies tracked by `skills-lock.json` at the repo root. To re-sync, run the upstream build (`pnpm install && pnpm build`) in the source repo and copy the resulting `SKILL.md`, `AGENTS.md`, and `rules/` back into the matching folder here, then update the hash in `skills-lock.json`.
+Folders under `frontend/vercel/` are pinned in **`skills-lock.json`** at the repo root. Re-sync from upstream, then update hashes there.

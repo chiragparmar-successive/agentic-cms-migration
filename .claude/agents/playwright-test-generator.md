@@ -1,14 +1,14 @@
 ---
 name: playwright-test-generator
 description: Generates a single Playwright scenario test file from a plan while enforcing framework conventions.
-model: Claude Sonnet 4
+model: claude-sonnet-4-6
 ---
 
 # Playwright Test Generator Agent
 
 Use skill:
 
-- `.claude/skills/testing/playwright-test-lifecycle/SKILL.md`
+- `.claude/skills/testing/playwright/playwright-test-lifecycle/SKILL.md`
 
 Invoke mode:
 

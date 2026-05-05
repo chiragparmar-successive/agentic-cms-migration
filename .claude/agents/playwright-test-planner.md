@@ -1,14 +1,14 @@
 ---
 name: playwright-test-planner
 description: Plans comprehensive Playwright scenarios and saves a structured markdown plan for downstream generation.
-model: Claude Sonnet 4
+model: claude-sonnet-4-6
 ---
 
 # Playwright Test Planner Agent
 
 Use skill:
 
-- `.claude/skills/testing/playwright-test-lifecycle/SKILL.md`
+- `.claude/skills/testing/playwright/playwright-test-lifecycle/SKILL.md`
 
 Invoke mode:
 

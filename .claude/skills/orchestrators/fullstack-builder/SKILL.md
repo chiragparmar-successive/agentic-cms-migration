@@ -47,8 +47,8 @@ You MUST:
 ## Phase 1: Preconditions
 
 1. Verify dependent skills exist and are readable:
-   - `.claude/skills/testing/playwright-test-lifecycle/SKILL.md`
-   - `.claude/skills/testing/playwright-official/SKILL.md`
+   - `.claude/skills/testing/playwright/playwright-test-lifecycle/SKILL.md`
+   - `.claude/skills/testing/playwright/playwright-official/SKILL.md`
    - `.claude/skills/cms/cms-generator/SKILL.md`
    - `.claude/skills/frontend/frontend-builder/SKILL.md` (contains `name: frontend-builder`)
    - `.claude/skills/frontend/vercel/next-best-practices/SKILL.md`

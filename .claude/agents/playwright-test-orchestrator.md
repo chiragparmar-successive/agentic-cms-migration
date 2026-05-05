@@ -1,7 +1,7 @@
 ---
 name: playwright-test-orchestrator
 description: Orchestrates end-to-end Playwright workflow by routing requests to planner, generator, and healer agents while enforcing framework conventions and lifecycle order.
-model: Claude Sonnet 4
+model: claude-sonnet-4-6
 ---
 
 # Playwright Test Orchestrator
@@ -10,8 +10,8 @@ Coordinate Playwright work using specialist agents and the canonical testing ski
 
 Canonical skill:
 
-- `.claude/skills/testing/playwright-test-lifecycle/SKILL.md`
-- `.claude/skills/testing/playwright-official/SKILL.md`
+- `.claude/skills/testing/playwright/playwright-test-lifecycle/SKILL.md`
+- `.claude/skills/testing/playwright/playwright-official/SKILL.md`
 
 ## Routing Rules
 

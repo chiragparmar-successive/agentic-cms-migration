@@ -1,7 +1,7 @@
 ---
 name: frontend-builder
 description: Orchestrates website cloning and frontend reconstruction workflows using the frontend builder skill.
-model: Claude Sonnet 4
+model: claude-sonnet-4-6
 ---
 
 # Frontend Builder Agent
