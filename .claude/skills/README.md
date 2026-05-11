@@ -22,6 +22,8 @@ Skills are grouped by **domain** first, then by **skill name**. Entry point for 
   orchestrators/
     fullstack-builder/
       SKILL.md
+    playwright-test-gen/
+      SKILL.md
   testing/
     README.md
     playwright/

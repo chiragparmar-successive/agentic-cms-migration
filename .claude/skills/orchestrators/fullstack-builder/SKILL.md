@@ -17,7 +17,7 @@ Build an end-to-end delivery pipeline with this strict order:
 
 This master skill coordinates these skills/agents:
 
-- `playwright-test-lifecycle` (plan/generate/heal)
+- `phase-b` (full Playwright test-first contract — crawl, baseline, plan, generate, heal, checkpoint)
 - `cms-generator`
 - `frontend-builder`
 
@@ -47,10 +47,14 @@ You MUST:
 ## Phase 1: Preconditions
 
 1. Verify dependent skills exist and are readable:
+   - `.claude/commands/phase-b.md` (Phase B canonical definition)
+   - `.claude/skills/testing/playwright/playwright-exploratory/SKILL.md`
    - `.claude/skills/testing/playwright/playwright-test-lifecycle/SKILL.md`
    - `.claude/skills/testing/playwright/playwright-official/SKILL.md`
+   - `.claude/skills/testing/playwright/playwright-cli/SKILL.md`
+   - `.claude/skills/testing/playwright/playwright-pom/SKILL.md`
    - `.claude/skills/cms/cms-generator/SKILL.md`
-   - `.claude/skills/frontend/frontend-builder/SKILL.md` (contains `name: frontend-builder`)
+   - `.claude/skills/frontend/frontend-builder/SKILL.md`
    - `.claude/skills/frontend/vercel/next-best-practices/SKILL.md`
    - `.claude/skills/frontend/vercel/vercel-react-best-practices/SKILL.md`
    - `.claude/skills/frontend/vercel/vercel-composition-patterns/SKILL.md`
@@ -58,29 +62,31 @@ You MUST:
 3. Validate URL argument(s).
 4. Define a project slug from target hostname (or user-provided name).
 
-## Phase 2: Test Planning and Test-Case Generation (Playwright First)
+## Phase 2: Test-First Contract (Phase B)
 
-Use `playwright-test-lifecycle` in this sequence:
+**Execute Phase B in full — identical to running `/phase-b <url>` standalone.**
 
-1. `plan <target-url-or-scope>`
-   - create canonical test plan covering:
-     - happy paths
-     - key edge/negative cases
-     - navigation and conversion-critical flows
-2. `generate <test-suite> <test-name> <test-file> <seed-file>`
-   - generate runnable scenario specs from the plan
-   - ensure framework conventions, semantic locators, and structured logging
-3. Define minimum required suites to pass before completion:
-   - smoke
-   - core regression
-   - CMS-content rendering validations
+Read and follow `.claude/commands/phase-b.md` exactly. Do not shortcut or skip any step.
 
-Mandatory output for this phase:
+Phase B uses all five Playwright skills in order:
+1. `playwright-exploratory` — full-site crawl + full-page baseline screenshots
+2. `playwright-test-lifecycle` — plan → generate → heal lifecycle
+3. `playwright-official` — Playwright project conventions
+4. `playwright-cli` — browser automation via MCP
+5. `playwright-pom` — page object model for all generated specs
 
-- Planned scenarios count
-- Generated test files list
-- Coverage notes (what is intentionally deferred)
-- All Playwright project files, plans, specs, and run artifacts confined to `output/<site>/test/` (including `test-results/`, reports, and traces; never at the monorepo root)
+Phase B steps that MUST complete before moving to Phase 3:
+- Exploratory crawl complete — `output/<site>/test/exploratory/baseline/index.json` written
+- Baseline screenshots captured for all crawled routes
+- Test plan saved to `output/<site>/test/specs/ui-complete-plan.md`
+- All P0 and P1 scenarios have generated test files
+- Smoke and core regression suites pass against the legacy site
+- **CHECKPOINT 2 gate passed** — human has approved the test suite
+- `output/<site>/test/specs/CONTRACT.md` written
+
+Do not proceed to Phase 3 until `CONTRACT.md` exists and Checkpoint 2 is approved.
+
+All Playwright artifacts confined to `output/<site>/test/` — never at the repo root.
 
 ## Phase 3: Build Backend (Strapi)
 

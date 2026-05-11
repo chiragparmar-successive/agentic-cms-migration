@@ -1,0 +1,183 @@
+---
+description: "Phase B — Test-First Contract: Crawl the legacy site, capture visual baseline, generate a full Playwright test suite, establish a green baseline, and gate on human approval before the suite becomes the immutable behavioral contract for migration."
+argument-hint: "<legacy-site-url>"
+---
+
+## Phase B — Test-First Contract
+
+Run this phase against the **legacy source site** before any migration work begins.
+The test suite produced here becomes the immutable behavioral contract that Phases C, D, and E must satisfy.
+
+### Skills Used (in order)
+
+1. `.claude/skills/testing/playwright/playwright-exploratory/SKILL.md` — full-site crawl + baseline screenshots
+2. `.claude/skills/testing/playwright/playwright-test-lifecycle/SKILL.md` — plan → generate → heal lifecycle
+3. `.claude/skills/testing/playwright/playwright-official/SKILL.md` — Playwright project conventions
+4. `.claude/skills/testing/playwright/playwright-cli/SKILL.md` — browser automation via MCP
+5. `.claude/skills/testing/playwright/playwright-pom/SKILL.md` — page object model structure
+
+Arguments: $ARGUMENTS
+
+---
+
+## Step 1 — Preconditions
+
+1. Verify all five skill files listed above are readable.
+2. Verify browser automation is available (MCP Playwright tools).
+3. Validate and normalise the URL argument (add `https://` if scheme is missing). If missing, stop and ask: `phase-b <url>`
+4. Derive `<site>` slug: lowercase hostname, dots and slashes replaced with `-`.
+5. Confirm output root: `output/<site>/test/` (create if absent).
+
+---
+
+## Step 2 — Exploratory Crawl + Visual Baseline
+
+Follow `playwright-exploratory` in **crawl** mode against the legacy URL.
+
+This produces:
+- `output/<site>/test/exploratory/baseline/index.json` — full route manifest
+- `output/<site>/test/exploratory/baseline/<slug>/screenshot.png` — full-page screenshot per route
+- `output/<site>/test/exploratory/baseline/<slug>/text.txt` — visible text per route
+- `output/<site>/test/exploratory/specs/exploratory-crawl.spec.ts` — replayable smoke spec
+
+These screenshots are the **visual baseline** for Phase E regression comparison. Do not skip this step.
+
+After crawl completes, report:
+- Total pages discovered and crawled
+- Any pages that failed or were skipped
+- Path to `index.json`
+
+---
+
+## Step 3 — Test Planning
+
+Follow `playwright-test-lifecycle` in **plan** mode.
+
+Use `output/<site>/test/exploratory/baseline/index.json` as the starting route inventory — do not re-crawl routes already discovered.
+
+Plan must cover:
+- All routes from the exploratory crawl
+- Content rendering (headings, body copy, media, structured data)
+- SEO signals (title, meta description, canonical, OG tags)
+- ARIA / accessibility landmarks and roles
+- All CTAs, forms, auth flows, navigation, interactive controls
+- Key user journeys end-to-end
+
+Follow scope limits from `playwright-test-lifecycle`: max 15 P0, 20 P1 scenarios per session. P2 are stubs.
+
+Save plan to: `output/<site>/test/specs/ui-complete-plan.md`
+
+---
+
+## Step 4 — Project Bootstrap
+
+Set up the Playwright project at `output/<site>/test/` following `playwright-official` conventions.
+
+Required files: `package.json`, `tsconfig.json`, `playwright.config.ts`, `utils/core.ts`, `pages/base.page.ts`, `fixtures/pages.fixture.ts`, and directory scaffold.
+
+Run `npm install` and confirm Playwright installs cleanly.
+
+---
+
+## Step 5 — Test Generation
+
+Follow `playwright-test-lifecycle` in **generate** mode.
+
+For each scenario (P0 first, then P1):
+- Read scenario from `output/<site>/test/specs/ui-complete-plan.md`
+- Explore via `playwright-cli` (browser MCP tools)
+- Write test to `output/<site>/test/tests/generated/<scenario-id>.spec.ts`
+- Follow full POM structure from `playwright-pom` — no inline locators in spec bodies
+- Run immediately after writing; enter heal loop on failure
+
+---
+
+## Step 6 — Execution + Heal Loop
+
+Follow `playwright-test-lifecycle` in **heal** mode for any failures.
+
+Run smoke suite first, then full regression:
+```
+cd output/<site>/test && npx playwright test
+```
+
+Stop only when all P0 and P1 tests pass with no blocking failures. Produce analytics table:
+
+| Metric | Value |
+|---|---|
+| Total tests | |
+| Passed | |
+| Failed | |
+| Skipped | |
+| Pass rate (%) | |
+| Iterations to green | |
+
+---
+
+## Step 7 — CHECKPOINT 2 (Human Approval Gate)
+
+After all P0 and P1 tests are green, **pause** and present:
+
+- Scenario summary (ID / priority / description / status)
+- Final pass rate and analytics table
+- All generated test file paths
+- All baseline screenshot paths from Step 2
+- Any scenarios marked `test.fixme()` with reasons
+
+Then ask:
+
+> "Phase B complete. The test suite is ready to become the immutable behavioral contract for this migration.
+> Do you approve? (yes / no / request changes)"
+
+- **yes** → write `CONTRACT.md` and report Phase B done
+- **no / request changes** → implement changes, re-run affected tests, re-present for approval
+
+---
+
+## Step 8 — Write CONTRACT.md
+
+On approval, write `output/<site>/test/specs/CONTRACT.md`:
+
+```markdown
+# Phase B — Approved Behavioral Contract
+
+- **Site:** <legacy-site-url>
+- **Approved:** <date>
+- **Pass rate:** <X>%
+
+## Scenario Summary
+
+| ID | Priority | Description | Status |
+|---|---|---|---|
+
+## Test Files
+
+- tests/generated/<id>.spec.ts
+
+## Baseline Snapshots
+
+- exploratory/baseline/<slug>/screenshot.png
+
+## Known Gaps
+
+- <any fixme'd tests with reason>
+```
+
+This file is the handoff artifact consumed by Phases C, D, and E.
+
+---
+
+## Acceptance Criteria
+
+Do not mark Phase B complete until all are true:
+
+- [ ] Exploratory crawl completed — `index.json` written
+- [ ] Baseline screenshots captured for all crawled routes
+- [ ] Plan saved to `output/<site>/test/specs/ui-complete-plan.md`
+- [ ] All P0 scenarios have a generated test file
+- [ ] All P1 scenarios have a generated test file (or deferred with reason)
+- [ ] Smoke suite passes
+- [ ] Core regression suite passes
+- [ ] Human has approved at Checkpoint 2
+- [ ] `CONTRACT.md` written
+- [ ] All artifacts confined to `output/<site>/test/`

@@ -19,6 +19,8 @@ out/
 playwright-report/
 test-results/
 blob-report/
+.playwright-mcp/
+.claude/.playwright-mcp/
 
 # Environment files
 .env

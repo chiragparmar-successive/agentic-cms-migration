@@ -40,6 +40,10 @@ output/<site>/
       seed.spec.ts
       generated/
         <scenario>.spec.ts
+    screenshots/
+      baseline/              # captured during plan phase — one PNG per route/state
+        <route-slug>.png
+        <route-slug>-<state>.png
     test-results/
       ...                    # Playwright outputDir: failures, attachments, traces
     playwright-report/       # optional HTML reporter outputFolder
@@ -114,48 +118,66 @@ Do not run `heal` before reproducing the failure.
 
 ## Required Conventions
 
-All generated code must follow these rules:
+All generated code must follow these rules. The canonical structure is defined in `.claude/skills/testing/playwright/playwright-pom/SKILL.md` — read it before generating any test or page object.
 
 1. **Imports** use path aliases only.
-   - Use: `@fixtures/test.fixtures`, `@utils/core`, `@config/config.manager`
-   - Do not use relative imports.
-2. **Functions** use named arrow exports only.
+   - Spec files: import `test` and `expect` from `@fixtures/pages.fixture` — never directly from `@playwright/test`.
+   - Page/component files: import `Page`, `Locator`, `expect` from `@playwright/test`; import `logger` from `@utils/core`.
+   - Do not use relative imports anywhere.
+2. **Page Object Model (mandatory)**
+   - Every spec imports page objects via `@fixtures/pages.fixture` fixture injection.
+   - Never call `page.locator()`, `page.getByRole()`, etc. directly inside a `test()` body.
+   - Locators live in page/component objects as `get` getters.
+   - Actions live as `async` methods on page/component objects.
+   - Assertions live as `assertX()` methods on page/component objects.
+   - See `playwright-pom/SKILL.md` for full structure and naming rules.
+3. **Functions** use named arrow exports only.
    - No default exports.
    - No function declarations for exported helpers.
-3. **Naming**
-   - Files: `kebab-case.spec.ts`
+4. **Naming**
+   - Spec files: `<scenario-id>.spec.ts` (kebab-case)
+   - Page files: `<route-name>.page.ts`
+   - Component files: `<component-name>.component.ts`
    - Classes/types: `PascalCase`
    - Variables/functions: `camelCase`
    - Constants: `UPPER_SNAKE_CASE`
-4. **Logging**
+5. **Logging**
    - Use `logger.info(...)` and `logger.error(...)`.
    - Never use `console.log(...)`.
-5. **Test shape**
+6. **Test shape**
    - Wrap tests in `test.describe("<suite> <tags>", () => {})`.
    - Keep one scenario per file.
-6. **Locators**
-   - Prefer semantic locators (`getByRole`, `getByText`, `getByLabel`).
-   - Use CSS selectors only when necessary.
 7. **Documentation**
-   - Add JSDoc for test suite and test case.
-   - Add step comments before each scenario step.
+   - Add JSDoc at the top of every spec, page, and component file (scenario ID, priority, route).
+   - Add step descriptions in every `test.step()` call.
 8. **Async and reliability**
    - Always await async operations.
    - Do not use deprecated patterns.
 9. **Error handling**
    - Log and rethrow errors; do not swallow failures.
 10. **No guessed selectors**
-   - Do not use speculative locator patterns.
-   - If a selector is uncertain, inspect DOM/snapshot first and document chosen locator strategy.
+    - Do not write any locator without first inspecting the DOM via `browser_snapshot`.
+    - Document the chosen locator strategy in a comment on the getter if CSS was required.
 11. **Localization-safe testing**
-   - For multilingual UI, assert using stable role/structure first, then language-specific text.
-   - For Japanese/English variants, include at least one assertion per locale-critical flow.
+    - For multilingual UI, assert using stable role/structure first, then language-specific text.
+    - For Japanese/English variants, include at least one assertion per locale-critical flow.
+12. **Test steps**
+    - Wrap every action group and assertion inside `test.step('<description>', async () => { ... })`.
+    - Step descriptions must be human-readable and match the plan step or page method name.
+    - One `test.step` per logical action group — do not wrap trivial single-line awaits unless they are assertions.
 
 ## Modes
 
 ### Mode: plan
 
 Purpose: create comprehensive scenario plans for UI/API/BDD/visual/accessibility/performance coverage.
+
+**Scope limits (mandatory):**
+
+- Document at most **15 P0 scenarios** and **20 P1 scenarios** per crawl session.
+- Any flow beyond these limits must be captured as a **P2 stub**: route + one-line description only — no full step list.
+- Never expand a stub into a full scenario during planning; defer to a subsequent plan run.
+- This prevents context overflow and keeps the plan auditable.
 
 Workflow:
 
@@ -168,10 +190,12 @@ Workflow:
    - modal/drawer/dropdown triggers
    - pagination/filter/sort controls
    - auth/account/cart/checkout flows if present
-3. Build a page-by-page interaction inventory and convert each flow into scenarios.
-4. Include happy, edge, negative, validation, and cross-page journey scenarios.
-5. Include explicit expected outcomes and data prerequisites per scenario.
-6. Save the complete markdown plan to:
+3. **Capture baseline screenshots (mandatory):** After navigating to each distinct route or triggering each significant UI state (open modal, filled form, error state), call `browser_take_screenshot` and save the result to `output/<site>/test/screenshots/baseline/<route-slug>.png` (or `<route-slug>-<state>.png` for states). Use kebab-case slugs derived from the path (e.g. `/guest-pay` → `guest-pay.png`, modal open → `home-modal-open.png`). Create the `screenshots/baseline/` directory before saving the first file.
+4. Build a page-by-page interaction inventory and convert each flow into scenarios.
+5. Include happy, edge, negative, validation, and cross-page journey scenarios.
+6. Include explicit expected outcomes and data prerequisites per scenario.
+7. Reference the captured baseline screenshot path in each scenario's **Assertions** section so generators can wire `toHaveScreenshot()` to the correct file.
+8. Save the complete markdown plan to:
    - `output/<site>/test/specs/ui-complete-plan.md`
    via `planner_save_plan`.
 
@@ -220,18 +244,30 @@ Workflow:
 Generation quality gates (mandatory):
 
 1. One test file per scenario ID from plan.
-2. Scenario ID appears in test title and comment header.
+2. Scenario ID appears in test title, JSDoc header, and describe block.
 3. Assertions must map to scenario assertions one-to-one.
-4. Replace fragile `getByText`-only checks with role/label/test-id-first strategy when possible.
-5. For content-heavy pages, include structural assertions (counts, visibility, state changes), not only static text checks.
-6. Include negative and guard assertions where relevant (e.g., invalid login remains blocked).
-7. Avoid comments like "assuming ..." in final tests.
-8. Do not stop after file generation; execution is mandatory.
-9. If execution fails, healing iteration is mandatory.
+4. Before writing any locator, inspect DOM via `browser_snapshot` and place it in a page/component getter — never inline in the spec.
+5. Check if a page object already exists for the target route (`output/<site>/test/pages/<route>.page.ts`); reuse it, or create it before writing the spec.
+6. Update `fixtures/pages.fixture.ts` when a new page or component is created.
+7. For content-heavy pages, include structural assertions (counts, visibility, state changes) in page object assertion methods.
+8. Include negative and guard assertions as `assertX()` methods on the page object.
+9. Avoid comments like "assuming ..." in final tests.
+10. Do not stop after file generation; execution is mandatory.
+11. If execution fails, healing iteration is mandatory.
+12. Every action group and assertion must be wrapped in `test.step('<description>', async () => { ... })`.
 
 ### Mode: heal
 
 Purpose: diagnose and remediate failing tests with reproducible fixes.
+
+**Iteration cap (mandatory):**
+
+- Each test gets at most **3 targeted fix attempts** with distinct strategies.
+- After 3 attempts still failing:
+  1. Mark the test `test.fixme('reason: <root-cause>. Blocked by: <blocker>')`.
+  2. Log the failure summary (attempt count, strategies tried, last error).
+  3. Move on — do not loop indefinitely.
+- Exception: if root cause is `app-defect` (the application itself is broken), mark `test.fixme()` immediately on the first attempt and surface it to the user without consuming iterations.
 
 Workflow:
 
@@ -239,15 +275,18 @@ Workflow:
 2. Debug each failure (`test_debug`) and inspect traces/snapshots/logs/network data.
 3. Determine root cause (selector drift, timing, assertions, data/env, config).
 4. Apply targeted fixes while preserving framework conventions.
-5. Re-run and iterate until pass, or mark as `test.fixme()` with a clear reason.
+5. Re-run and iterate (up to 3 attempts per test); mark `test.fixme()` if still failing after limit.
 6. Keep reruns focused on failing specs first, then run full suite.
 
 Healing quality gates:
 
 - classify failures before patching: `locator`, `timing`, `data`, `navigation`, `app-defect`
+- for `locator` failures: fix the getter in the **page/component object**, not the spec file
 - patch smallest safe surface first
 - rerun: failed test -> related group -> full required suite
-- append concise fix note per patched test
+- append concise fix note per patched method/getter
+- never exceed 3 fix attempts per test before marking `test.fixme()`
+- after fixing a shared page object, run the full suite to catch regressions in other specs that use it
 
 ## Output Contract
 
@@ -258,6 +297,8 @@ Healing quality gates:
 - Scenarios are isolated and runnable in any order.
 - Plan file path is `output/<site>/test/specs/ui-complete-plan.md`.
 - Must include scenario IDs, priorities, and explicit assertion lists.
+- Must include baseline screenshots saved to `output/<site>/test/screenshots/baseline/` — one PNG per route and per significant UI state visited during crawling.
+- Each scenario's Assertions section must reference the corresponding baseline screenshot path when a visual assertion is applicable.
 
 ### For `generate`
 
@@ -314,6 +355,7 @@ If inputs are missing, request only the missing mode arguments.
 - Do not skip untested interactive UI regions.
 - Do not ship low-detail plans/tests that cannot be audited line-by-line.
 - Do not write `test-results/`, `playwright-report/`, trace blobs, or reporter output outside `output/<site>/test/`.
+- Do not write baseline screenshots outside `output/<site>/test/screenshots/baseline/`.
 
 ## Site-Specific Guidance (tabipass.jp style sites)
 
@@ -327,6 +369,7 @@ For content-rich Japanese travel portals with mixed JP/EN UI:
 
 ## Reference Docs
 
+- `.claude/skills/testing/playwright/playwright-pom/SKILL.md` — **canonical POM structure** every generated test and page object must follow
 - `.claude/skills/testing/playwright/playwright-official/SKILL.md` — official Playwright baseline this lifecycle stays compatible with
 - `.claude/skills/testing/playwright/playwright-cli/SKILL.md` — interactive browser-CLI reference for ad-hoc planning/debugging
 - `.claude/skills/testing/playwright/playwright-cli/references/spec-driven-testing.md` — supplementary plan/generate/heal CLI workflow
