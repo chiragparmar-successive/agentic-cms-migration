@@ -8,7 +8,7 @@ model: claude-sonnet-4-6
 
 Use skill:
 
-- `.claude/skills/testing/playwright/playwright-official/SKILL.md`
+- `.claude/skills/phase-b/playwright-official/SKILL.md`
 
 Do not replace existing flow:
 

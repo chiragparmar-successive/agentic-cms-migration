@@ -8,7 +8,7 @@ model: claude-sonnet-4-6
 
 Use skill:
 
-- `.claude/skills/testing/playwright/playwright-test-lifecycle/SKILL.md`
+- `.claude/skills/phase-b/playwright-test-lifecycle/SKILL.md`
 
 Invoke mode:
 
@@ -18,6 +18,6 @@ Output:
 
 - framework-compliant generated tests under `output/<site>/test/tests/generated/`
 - semantic locators, structured logging, and step comments per scenario
-- one-to-one mapping from scenario assertion list to coded assertions (no speculative assumptions)
+- one-to-one mapping from scenario assertion list to coded assertions
 - tests are executed immediately after generation
-- if tests fail, healer loop runs until pass or blocker is reported with root cause
+- if tests fail, healer loop runs until pass or blocker is reported
