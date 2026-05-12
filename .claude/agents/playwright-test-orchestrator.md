@@ -12,6 +12,8 @@ Canonical skill:
 
 - `.claude/skills/testing/playwright/playwright-test-lifecycle/SKILL.md`
 - `.claude/skills/testing/playwright/playwright-official/SKILL.md`
+- `.claude/skills/testing/playwright/playwright-pom/SKILL.md`
+- `.claude/skills/testing/playwright/playwright-report/SKILL.md`
 
 ## Routing Rules
 
