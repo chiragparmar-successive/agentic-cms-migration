@@ -1,249 +1,274 @@
 ---
 name: fullstack-builder
-description: Orchestrate playwright test planning/generation first, then CMS and frontend build, then execute and iterate failing tests with analytics until all critical flows pass.
+description: Master orchestrator for the AI-Powered CMS Transformation Platform. Coordinates Phases A–E in strict order with human checkpoints, driving the full pipeline from legacy site to deployed Next.js 16 + Strapi 5 stack.
 argument-hint: "<url> [sitemap-url]"
 user-invocable: true
 ---
 
 # Fullstack Master Builder
 
-Build an end-to-end delivery pipeline with this strict order:
+Orchestrate the end-to-end CMS transformation pipeline:
 
-1. Playwright test cases first
-2. CMS generation (Strapi)
-3. Frontend generation/integration (Next.js)
-4. Test execution + analytics
-5. Re-iterate failed tests until green
-
-This master skill coordinates these skills/agents:
-
-- `playwright-test-lifecycle` (plan/generate/heal)
-- `cms-generator`
-- `frontend-builder`
+```
+SOURCE INPUT → PHASE A → CHECKPOINT 1 → PHASE B → CHECKPOINT 2 → PHASE C → PHASE D → PHASE E → CHECKPOINT 3 → CHECKPOINT 4 → TARGET STACK
+```
 
 ## Arguments
 
-Accept:
+- `$ARGUMENTS[0]` = Canonical website URL (required)
+- `$ARGUMENTS[1]` = Sitemap URL (optional but recommended)
 
-- `$ARGUMENTS[0]` = canonical website URL (required)
-- `$ARGUMENTS[1]` = sitemap URL (optional but recommended)
-
-If arguments are missing, stop and ask for:
+If arguments are missing, stop and ask:
 `fullstack-builder <url> [sitemap-url]`
 
 ## Contract
 
 You MUST:
 
-1. Create Playwright test plan and test cases before building CMS/frontend.
-2. Build CMS second (source of structured content truth).
-3. Build frontend third and wire it to CMS APIs.
-4. Execute Playwright tests against the integrated app.
-5. Produce analytics for pass/fail, flaky patterns, and root-cause categories.
-6. Re-iterate failed test cases (heal/fix/re-run) until all required tests pass.
-7. Never declare done while required tests are still failing.
-8. Enforce exact content parity across source -> CMS -> frontend output.
+1. Execute phases in strict order: A → B → C → D → E.
+2. Pause at every human checkpoint and wait for explicit approval.
+3. Never skip a phase or checkpoint.
+4. Never weaken test assertions to make the new stack pass.
+5. Enforce semantic content parity between source → CMS → frontend.
+6. Track and report status at every phase transition.
 
-## Phase 1: Preconditions
+## Pre-Flight
 
 1. Verify dependent skills exist and are readable:
-   - `.claude/skills/testing/playwright/playwright-test-lifecycle/SKILL.md`
-   - `.claude/skills/testing/playwright/playwright-official/SKILL.md`
-   - `.claude/skills/cms/cms-generator/SKILL.md`
-   - `.claude/skills/frontend/frontend-builder/SKILL.md` (contains `name: frontend-builder`)
-   - `.claude/skills/frontend/vercel/next-best-practices/SKILL.md`
-   - `.claude/skills/frontend/vercel/vercel-react-best-practices/SKILL.md`
-   - `.claude/skills/frontend/vercel/vercel-composition-patterns/SKILL.md`
-2. Verify browser automation MCP is available before reverse engineering.
-3. Validate URL argument(s).
-4. Define a project slug from target hostname (or user-provided name).
+   - Phase A: `.claude/skills/phase-a/site-crawler/SKILL.md`
+   - Phase A: `.claude/skills/phase-a/wp-source-adapter/SKILL.md`
+   - Phase A: `.claude/skills/phase-a/content-model-inferencer/SKILL.md`
+   - Phase B: `.claude/skills/phase-b/playwright-suite-generator/SKILL.md`
+   - Phase B: `.claude/skills/phase-b/baseline-runner/SKILL.md`
+   - Phase B: `.claude/skills/phase-b/playwright-test-lifecycle/SKILL.md`
+   - Phase B: `.claude/skills/phase-b/playwright-official/SKILL.md`
+   - Phase C: `.claude/skills/phase-c/strapi-schema-generator/SKILL.md`
+   - Phase C: `.claude/skills/phase-c/strapi-bootstrapper/SKILL.md`
+   - Phase C: `.claude/skills/phase-c/content-etl-pipeline/SKILL.md`
+   - Phase C: `.claude/skills/phase-c/graphql-layer-validator/SKILL.md`
+   - Phase D: `.claude/skills/phase-d/nextjs-scaffolder/SKILL.md`
+   - Phase D: `.claude/skills/phase-d/cms-adapter-generator/SKILL.md`
+   - Phase D: `.claude/skills/phase-d/page-component-generator/SKILL.md`
+   - Phase D: `.claude/skills/phase-d/route-validator/SKILL.md`
+   - Phase E: `.claude/skills/phase-e/playwright-behavioral-parity/SKILL.md`
+   - Phase E: `.claude/skills/phase-e/sonarqube-gate/SKILL.md`
+   - Phase E: `.claude/skills/phase-e/lighthouse-ci-gate/SKILL.md`
+   - Phase E: `.claude/skills/phase-e/ai-remediation-agent/SKILL.md`
+   - Vercel: `.claude/skills/frontend/vercel/next-best-practices/SKILL.md`
+   - Vercel: `.claude/skills/frontend/vercel/vercel-react-best-practices/SKILL.md`
+   - Vercel: `.claude/skills/frontend/vercel/vercel-composition-patterns/SKILL.md`
+   If any are missing, **stop and report** which prerequisites are unavailable.
 
-## Phase 2: Test Planning and Test-Case Generation (Playwright First)
+2. Verify browser automation MCP is available.
 
-Use `playwright-test-lifecycle` in this sequence:
+3. Validate URL argument(s). If the source site is behind auth wall, CAPTCHA, or anti-bot protection, **stop and report**.
 
-1. `plan <target-url-or-scope>`
-   - create canonical test plan covering:
-     - happy paths
-     - key edge/negative cases
-     - navigation and conversion-critical flows
-2. `generate <test-suite> <test-name> <test-file> <seed-file>`
-   - generate runnable scenario specs from the plan
-   - ensure framework conventions, semantic locators, and structured logging
-3. Define minimum required suites to pass before completion:
-   - smoke
-   - core regression
-   - CMS-content rendering validations
+4. Define project slug from target hostname (or user-provided name).
 
-Mandatory output for this phase:
+---
 
-- Planned scenarios count
-- Generated test files list
-- Coverage notes (what is intentionally deferred)
-- All Playwright project files, plans, specs, and run artifacts confined to `output/<site>/test/` (including `test-results/`, reports, and traces; never at the monorepo root)
+## Phase A — Reverse Engineering
 
-## Phase 3: Build Backend (Strapi)
+### A.1: Site Crawling
 
-Follow `cms-generator` instructions with the same argument set.
+Use `site-crawler` skill:
+- Crawl all pages from URL/sitemap
+- Extract DOM, routes, media, sitemaps
+- Produce site inventory in `output/<site>/docs/research/`
 
-Expected backend output:
+### A.2: WordPress Adapter (optional)
 
-- `/cms` Strapi project
-- content types and relations
-- sample/demo content
-- docs in `/cms/docs`
+Use `wp-source-adapter` skill — only if WordPress detected:
+- Extract content via WP-JSON REST API
+- Map WP data structures to content model candidates
 
-Required backend checks:
+### A.3: Content Model Inference
 
-- `npm install` in `/cms`
-- `npm run build`
-- `npm run develop` starts without fatal errors
-- Admin and API endpoints reachable:
-  - `http://localhost:1337/admin`
-  - `http://localhost:1337/api`
+Use `content-model-inferencer` skill:
+- Analyse crawled data and produce Content Model Spec
+- Generate `output/<site>/docs/content-model/SCHEMA-DESIGN.md`
 
-## Phase 4: Build Frontend (Next.js)
+### ✋ CHECKPOINT 1 — Human Approves Content Model Spec
 
-Follow `frontend-builder` instructions for page structure and visual rebuild.
-Before implementation, apply Vercel skill packs as mandatory quality gates:
+Present to human:
+- Content Model Spec summary (types, fields, relationships)
+- Coverage assessment
+- **Wait for explicit approval before proceeding.**
 
-1. `next-best-practices` for Next.js architecture/runtime/file conventions.
-2. `vercel-react-best-practices` for performance, waterfalls, bundle control, and rerender hygiene.
-3. `vercel-composition-patterns` for scalable component API design.
-4. `next-cache-components` where Next.js 16 cache components are enabled.
+---
 
-Then enforce integration changes:
+## Phase B — Test-First Contract
 
-1. Replace any mock/local data usage with Strapi API fetches.
-2. Add typed API client helper (example: `src/lib/strapi.ts`).
-3. Add `.env.local` with:
-   - `NEXT_PUBLIC_STRAPI_URL=http://localhost:1337`
-4. Update route pages/components to query Strapi endpoints for:
-   - list pages
-   - detail pages
-   - shared/global sections (hero, nav/footer data when modeled)
-5. Ensure image URLs and media handling are Strapi-compatible.
-6. Ensure frontend UI text/media is rendered from Strapi data and matches extracted source content exactly.
+### B.1: Test Suite Generation
 
-Required frontend checks:
+Use `playwright-suite-generator` skill:
+- Generate comprehensive Playwright test suite from approved model spec
+- Cover route / content / SEO / ARIA / visual tests
+- Output to `output/<site>/test/tests/generated/`
 
-- `npm install`
-- `npm run build`
-- `npm run dev` starts cleanly
-- No unresolved API runtime errors in server/client logs
-- No blocking violations against Vercel quality gates:
-  - RSC/server-client boundary correctness
-  - async/data waterfall prevention
-  - bundle and script loading strategy
-  - image/font optimization patterns
+### B.2: Legacy Baseline Run
 
-## Phase 5: API Connection Validation
+Use `baseline-runner` skill:
+- Run test suite against legacy source site
+- Establish green baseline + visual snapshots
+- Ensure good pass percentage on source URL
 
-Perform concrete connectivity tests:
+### ✋ CHECKPOINT 2 — Human Approves Test Suite
 
-1. Direct API test from terminal:
-   - `curl http://localhost:1337/api/<known-content-type>?populate=*`
-2. Frontend data rendering test:
-   - Load at least one listing page fed by Strapi.
-   - Load at least one detail page fed by Strapi.
-3. Cross-check:
-   - Data created/seeded in Strapi appears in Next.js UI.
-4. Handle CORS if needed in Strapi config and re-test.
-5. Run content parity checks on representative pages/sections:
-   - Source page text/media vs Strapi stored fields
-   - Strapi API response vs rendered frontend UI
-   - Any mismatch must be corrected before completion
+Present to human:
+- Pass/fail summary against legacy site
+- Visual baselines
+- Coverage assessment
+- **After approval, the test suite becomes an immutable behavioral contract.**
+- **Wait for explicit approval before proceeding.**
 
-## Phase 5.5: Design References Verification (Mandatory)
+---
 
-Before final completion, verify screenshot artifacts exist:
+## Phase C — CMS Provisioning
 
-1. Ensure `docs/design-references/pages/` exists in the frontend project.
-2. For EACH discovered route slug, ensure:
-   - `docs/design-references/pages/<route-slug>/desktop-full.png`
-   - `docs/design-references/pages/<route-slug>/mobile-full.png`
-   - `docs/design-references/pages/<route-slug>/manifest.json`
-3. Ensure section captures exist:
-   - `docs/design-references/pages/<route-slug>/sections/*.png`
-4. If any expected screenshot is missing, STOP and re-run capture for that page before marking success.
+### C.1: Schema Generation
 
-## Phase 6: Playwright Execution, Analytics, and Re-iteration Loop
+Use `strapi-schema-generator` skill:
+- Generate Strapi 5 JSON schemas from approved Content Model Spec
 
-Run generated tests only after CMS + frontend are integrated.
+### C.2: Strapi Bootstrap
 
-Execution loop:
+Use `strapi-bootstrapper` skill:
+- Initialise Strapi 5 project in `output/<site>/cms/`
+- Apply schemas, enable GraphQL, configure roles & permissions
+- Verify build and dev server
 
-1. Execute test suites (smoke first, then broader regression) from `output/<site>/test` using that folder's `playwright.config.ts` so `test-results/` and reporters stay under `output/<site>/test/`.
-2. Collect results:
-   - pass count
-   - fail count
-   - flaky/retry-prone tests
-   - failure classes (locator, timing, data mismatch, API error, assertion mismatch)
-3. Produce analytics summary per run:
-   - pass rate (%)
-   - failure breakdown by category
-   - top unstable scenarios
-4. For failed tests:
-   - apply `heal` mode fixes
-   - adjust implementation or test robustness as required
-   - re-run failed tests, then full required suite
-5. Ask to reiterate failed cases and continue loop until perfect:
-   - "X tests failed. Reiterate healing and rerun now?"
-   - On approval, continue automatically.
-6. Stop only when required tests pass with no blocking failures.
+### C.3: Content ETL
 
-## Phase 7: End-to-End Acceptance Criteria
+Use `content-etl-pipeline` skill:
+- Extract content from source
+- Transform to match Strapi schemas
+- Load into CMS with media optimisation (WebP/AVIF)
+- Verify content parity
 
-Do not mark complete until all are true:
+### C.4: GraphQL Validation
 
-- [ ] Strapi builds and runs
-- [ ] Next.js builds and runs
-- [ ] Frontend requests Strapi successfully
-- [ ] Source site content matches Strapi content (exact text/media for modeled fields)
-- [ ] Frontend UI matches Strapi content exactly (no placeholder/lorem/paraphrased copy)
-- [ ] At least one collection and one single-type (or equivalent page model) render in UI
-- [ ] Media URLs resolve correctly in frontend
-- [ ] Design references generated for every page in `docs/design-references/pages/`
+Use `graphql-layer-validator` skill:
+- Introspect GraphQL schema
+- Run graphql-codegen for TypeScript types
+- Verify type coverage
+
+---
+
+## Phase D — Frontend Generation
+
+### D.1: Next.js Scaffolding
+
+Use `nextjs-scaffolder` skill:
+- Initialise Next.js 16 project (TS strict, Tailwind, App Router, RSC)
+- Set up environment variables for CMS
+
+### D.2: CMS Adapter
+
+Use `cms-adapter-generator` skill:
+- Generate ICMSAdapter interface + StrapiAdapter implementation
+- Wire into Next.js app
+
+### D.3: Page + Component Generation
+
+Use `page-component-generator` skill:
+- Generate RSC pages, layouts, components via Claude API
+- Wire to CMS adapter
+- Apply Vercel best practices
+
+### D.4: Route Validation
+
+Use `route-validator` skill:
+- Confirm URL parity between source and target
+- Block Phase E if missing routes exist
+
+---
+
+## Phase E — Quality Loop (Self-Healing)
+
+### E.1: Playwright Behavioral Parity
+
+Use `playwright-behavioral-parity` skill:
+- Run approved test suite against new stack
+- Compare with legacy baseline
+- Report regressions
+
+### E.2: SonarQube Code Quality Gate
+
+Use `sonarqube-gate` skill:
+- Analyse code quality
+- Enforce quality thresholds
+
+### E.3: Lighthouse CI Performance Gate
+
+Use `lighthouse-ci-gate` skill:
+- Analyse performance, accessibility, best practices, SEO
+- Enforce score thresholds
+
+### ✋ CHECKPOINT 3 — All Gates Pass?
+
+If **ALL gates pass** → proceed to CHECKPOINT 4.
+
+If **ANY gate fails** → trigger AI Remediation:
+
+### E.4: AI Remediation (max 5 iterations)
+
+Use `ai-remediation-agent` skill:
+- Analyse failures, generate patches, apply fixes
+- Re-run all quality gates
+- Iterate up to 5 times
+- If still failing after 5 iterations → escalate to human
+
+### ✋ CHECKPOINT 4 — Pre-Deployment Sign-Off
+
+Present to human:
+- All quality gate results
+- Content parity status
+- Visual parity screenshots
+- Route coverage
+- Remediation summary (if iterations were used)
+- **Wait for explicit approval to deploy.**
+
+---
+
+## End-to-End Acceptance Criteria
+
+Do not mark complete until ALL are true:
+
+- [ ] Phase A: Content Model Spec approved (CHECKPOINT 1)
+- [ ] Phase B: Test suite approved (CHECKPOINT 2), good pass % on source
+- [ ] Phase C: Strapi builds, runs, content loaded, GraphQL validated
+- [ ] Phase D: Next.js builds, runs, all routes covered, CMS wired
+- [ ] Phase E: All quality gates pass (or max iterations with human acceptance)
+- [ ] CHECKPOINT 4: Pre-deployment sign-off received
+- [ ] Source site content matches CMS content (semantic parity)
+- [ ] Frontend UI renders CMS content correctly
 - [ ] No blocking TypeScript/build errors in either app
 - [ ] Environment variables documented
 - [ ] Start commands documented for both apps
-- [ ] Required Playwright suites pass (no blocking failures)
-- [ ] Final analytics report is delivered
-- [ ] Vercel frontend quality gates applied and validated
 
 ## Required Deliverables
 
 At completion, provide:
 
-1. Project paths:
-   - CMS path
-   - Frontend path
-2. Run commands:
-   - CMS dev command
-   - Frontend dev command
-3. URLs:
-   - Strapi admin
-   - Strapi API base
-   - Frontend app URL
-4. Integration proof:
-   - Endpoint(s) queried
-   - Page(s) confirmed to render API data
-5. Screenshot proof:
-   - total page screenshots
-   - total section screenshots
-   - missing/failed captures (if any)
-6. Test analytics:
-   - total tests, passed, failed, skipped
-   - pass rate (%)
-   - failures by category
-   - flaky tests (if detected)
-   - iterations required to reach green
-7. Any remaining manual steps.
+1. **Project paths:** CMS path, Frontend path
+2. **Run commands:** CMS dev command, Frontend dev command
+3. **URLs:** Strapi admin, Strapi API base, GraphQL endpoint, Frontend app URL
+4. **Integration proof:** Endpoints queried, pages confirmed rendering API data
+5. **Test analytics:**
+   - Total tests, passed, failed, skipped
+   - Pass rate (%)
+   - Failures by category
+   - Remediation iterations used out of max (e.g., "2/5")
+   - Unresolved failures and recommended next steps (if any)
+6. **Quality gate results:** SonarQube metrics, Lighthouse scores per route
+7. **Any remaining manual steps**
 
 ## Notes
 
-- CMS schema is authoritative; frontend should conform to it.
-- Prefer reusable components and normalized relations.
-- If the frontend skill says backend is out of scope, override that here: backend is mandatory in this master workflow.
-- If conflicts arise between child skills, prioritize end-to-end operability (working API-connected website) over pixel-perfect completeness.
-- If test and implementation disagree, fix the root cause, not only the assertion surface.
+- CMS schema is authoritative; frontend conforms to it.
+- Phase ordering is strict — never skip or reorder.
+- Human checkpoints are non-negotiable — never bypass.
+- Test suite is immutable after CHECKPOINT 2 — fix implementation, not tests.
+- AI Remediation has a hard cap of 5 iterations — escalate after that.
+- If conflicts arise between child skills, prioritise end-to-end operability.

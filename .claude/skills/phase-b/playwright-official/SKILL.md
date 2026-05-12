@@ -9,8 +9,8 @@ user-invocable: true
 
 Official Playwright compatibility layer for this repo. This skill does **not** replace the existing lifecycle; it standardizes implementation choices to official Playwright patterns while preserving:
 
-- `.claude/skills/testing/playwright/playwright-test-lifecycle/SKILL.md`
-- `.claude/agents/testing/playwright/playwright-test-orchestrator.agent.md`
+- `.claude/skills/phase-b/playwright-test-lifecycle/SKILL.md`
+- `.claude/agents/playwright-test-orchestrator.md`
 - site-isolated output in `output/<site>/test/`
 
 ## Tasks

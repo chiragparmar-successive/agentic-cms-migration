@@ -8,7 +8,7 @@ model: claude-sonnet-4-6
 
 Use skill:
 
-- `.claude/skills/testing/playwright/playwright-test-lifecycle/SKILL.md`
+- `.claude/skills/phase-b/playwright-test-lifecycle/SKILL.md`
 
 Invoke mode:
 
