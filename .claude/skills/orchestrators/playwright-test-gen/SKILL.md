@@ -18,9 +18,11 @@ It coordinates:
 ## Arguments
 
 - `$ARGUMENTS[0]` = target URL (required, e.g. `https://example.com`)
+- `--title <string>` = custom PDF report title (optional, defaults to `"Test Execution Report — <site>"`)
 
-If the URL is missing, stop and ask:
-`playwright-test-gen <url>`
+If the URL is missing, stop and ask: `playwright-test-gen <url>`
+
+**Input documents are auto-detected** — no flag needed. Drop any BRD, user story, or requirements files into the `input/` folder at the project root before running. The skill reads them automatically. If the folder is empty, it runs in URL-only mode with no change in behaviour.
 
 ## Contract
 
@@ -28,8 +30,10 @@ You MUST:
 
 1. Derive a stable `<site>` slug from the target hostname (e.g. `example-com` for `example.com`).
 2. Confine **all** output to `output/<site>/test/` — no files at the repo root.
-3. Complete phases in order: Preconditions → Plan → Bootstrap → Generate → Execute → Heal.
+3. Complete phases in order: Preconditions → Plan → Bootstrap → Generate → Execute → Heal → Coverage Audit → PDF Report.
 4. Never declare done while any P0 test is failing.
+5. Always run the coverage audit after generation — it is mandatory, not optional.
+6. Always generate the PDF report as the final step — do not skip it.
 
 ---
 
@@ -39,10 +43,17 @@ You MUST:
    - `.claude/skills/testing/playwright/playwright-test-lifecycle/SKILL.md`
    - `.claude/skills/testing/playwright/playwright-official/SKILL.md`
    - `.claude/skills/testing/playwright/playwright-cli/SKILL.md`
+   - `.claude/skills/testing/playwright/playwright-report/SKILL.md`
 2. Verify browser automation is available (MCP Playwright tools or `playwright-cli`).
 3. Validate and normalise the URL argument (add `https://` if scheme is missing).
 4. Derive `<site>` slug: lowercase hostname, dots and slashes replaced with `-`.
 5. Confirm output directory: `output/<site>/test/` (create if absent).
+6. **Auto-detect input documents**:
+   - Scan the `input/` folder at the project root for any readable files (`.md`, `.txt`, `.csv`, `.html`).
+   - If one or more files are found, read and merge their full contents into a single requirements context string. Log: `Found N input file(s): [filenames]`.
+   - If the folder is empty or absent, set requirements context to `null` and log: `No input documents found — running in URL-only mode`.
+   - Never abort if `input/` is missing or empty — it is always optional.
+   - Do not read `.gitkeep`, `README.md`, or binary files from `input/`.
 
 ---
 
@@ -79,6 +90,33 @@ Plan output (mandatory):
   6. Risks and Known Unknowns
 - Minimum required suites before completion: **smoke**, **core regression**
 
+### Requirements Enrichment (auto — uses `input/` context from Phase 1)
+
+If the requirements context from Phase 1 is **not null** (files were found in `input/`):
+
+1. The context is already merged — use it directly.
+2. Extract every user story, acceptance criterion, or requirement. Recognise all of these formats:
+   - `US-NNN:` or `US NNN` prefixed lines
+   - `As a <role> I want to <action>` sentences
+   - `- [ ] <requirement>` checklist items
+   - `FR-N.N The system shall / must / should <behaviour>` lines
+   - Plain paragraphs or bullet lists describing expected behaviour
+3. For each extracted requirement, identify the closest matching scenario in the plan by route, keywords, or described flow.
+4. Add `**User Story**: <id> — <title>` to that scenario's detail block.
+5. Append any acceptance criteria not already in the scenario's **Assertions** list.
+6. If a requirement has no matching scenario, create a new P0 (for "must/shall") or P1 (for "should") scenario.
+7. Save the traceability index to `output/<site>/test/specs/brd-context.md`:
+   ```markdown
+   ## US-001: Title of user story
+   Mapped: UI-LOGIN-01, UI-LOGIN-02
+
+   ## US-002: Title of user story
+   Mapped: UI-HOME-03
+   ```
+8. Log: `N requirements extracted, M mapped to existing scenarios, K new scenarios created from requirements`.
+
+If requirements context is null (no files in `input/`), skip this entire section silently.
+
 ---
 
 ## Phase 3: Project Bootstrap
@@ -93,15 +131,19 @@ Required files:
 {
   "name": "<site>-tests",
   "private": true,
+  "type": "module",
   "scripts": {
     "test": "playwright test",
     "test:smoke": "playwright test --grep @smoke",
     "test:regression": "playwright test --grep @regression",
-    "report": "playwright show-report playwright-report"
+    "report": "playwright show-report playwright-report",
+    "report:pdf": "node scripts/generate-report.mjs",
+    "report:pdf:titled": "node scripts/generate-report.mjs --title"
   },
   "devDependencies": {
     "@playwright/test": "latest",
-    "typescript": "latest"
+    "typescript": "latest",
+    "fast-xml-parser": "^4.3.0"
   }
 }
 ```
@@ -222,6 +264,10 @@ export const test = base.extend<Pages>({
 export { expect } from '@playwright/test';
 ```
 
+### `scripts/generate-report.mjs` (required — create during bootstrap)
+
+Copy the full script template verbatim from `.claude/skills/testing/playwright/playwright-report/SKILL.md`. Do not truncate or paraphrase it — the script must be complete and runnable.
+
 ### Directory scaffold
 
 Create these directories (add `.gitkeep` if needed):
@@ -233,6 +279,7 @@ output/<site>/test/
   fixtures/
   utils/
   config/
+  scripts/
   tests/
     generated/
   specs/
@@ -240,7 +287,7 @@ output/<site>/test/
   test-results/
 ```
 
-Run `npm install` inside `output/<site>/test/` and confirm Playwright installs cleanly.
+Run `npm install` inside `output/<site>/test/` and confirm Playwright and `fast-xml-parser` install cleanly.
 
 ---
 
@@ -318,18 +365,144 @@ Stop only when all P0 and P1 tests pass with no blocking failures.
 
 ---
 
-## Phase 6: Acceptance Criteria
+## Phase 6: Coverage Audit
+
+Follow `playwright-test-lifecycle` in **audit** mode.
+
+This phase runs after all generation and healing is complete. It compares the plan against the generated spec files and ensures nothing from the plan was silently skipped.
+
+### Step 1 — Build the plan inventory
+
+Read `output/<site>/test/specs/ui-complete-plan.md` and extract every scenario ID. Use this pattern: lines matching `**ID**: UI-<ROUTE>-<NN>` or `### UI-<ROUTE>-<NN>`.
+
+Produce a list of all planned scenario IDs grouped by priority:
+```
+P0: UI-HOME-01, UI-HOME-02, UI-LOGIN-01
+P1: UI-HOME-03, UI-HOME-04, UI-NAV-01
+P2: UI-TNC-01 (stub), UI-HOME-09 (stub)
+```
+
+### Step 2 — Build the generated inventory
+
+Scan `output/<site>/test/tests/generated/` for all `.spec.ts` files.
+
+For each file, extract the scenario ID from:
+1. The filename (e.g. `ui-home-01.spec.ts` → `UI-HOME-01`)
+2. The test title inside the file (e.g. `test('UI-HOME-01: ...'` — use this as the authoritative ID if filename and title differ)
+
+Produce a list of all generated scenario IDs.
+
+### Step 3 — Diff
+
+```
+missing  = planned_ids  - generated_ids   (in plan but no spec file)
+extra    = generated_ids - planned_ids    (spec exists but no plan entry — unexpected)
+covered  = intersection
+```
+
+Log a coverage table:
+
+```
+Coverage Audit
+──────────────────────────────
+Planned scenarios  : 15
+Generated specs    : 12
+Missing            : 3  → UI-NAV-02, UI-CONTACT-02, UI-HOME-07
+Extra (unplanned)  : 0
+Coverage           : 80%
+──────────────────────────────
+```
+
+### Step 4 — Generate missing scenarios
+
+For each missing scenario (P0 and P1 only; P2 stubs are intentionally deferred):
+
+1. Find the scenario in `ui-complete-plan.md` — read its full detail block.
+2. Check if it was marked as a stub (P2 with no step list) — if so, skip and log `Skipped P2 stub: <id>`.
+3. Otherwise, run `playwright-test-lifecycle generate` for that scenario exactly as in Phase 4.
+4. Immediately run the generated test and heal if it fails (same 3-attempt cap applies).
+5. After each generated missing spec, re-check the inventory (the scenario is no longer missing).
+
+### Step 5 — Re-run the full suite
+
+After all missing scenarios are generated, run the full suite once more:
+
+```bash
+cd output/<site>/test && npx playwright test
+```
+
+### Step 6 — Final coverage report
+
+Log the final state:
+
+```
+Coverage Audit — Final
+──────────────────────────────────────────
+Planned (P0+P1)    : 14
+Generated (P0+P1)  : 14  ✓ fully covered
+P2 stubs deferred  : 3
+Extra (unplanned)  : 0
+──────────────────────────────────────────
+Previously missing : UI-NAV-02, UI-CONTACT-02, UI-HOME-07
+  → UI-NAV-02     : generated and passing ✓
+  → UI-CONTACT-02 : generated, marked test.fixme() — app-defect (contact form 500s)
+  → UI-HOME-07    : generated and passing ✓
+──────────────────────────────────────────
+```
+
+If coverage is less than 100% of P0+P1 after this phase, every gap must have a documented reason (fixme, blocked, out-of-scope). Do not proceed to Phase 7 until this condition is met.
+
+---
+
+## Phase 7: PDF Report Generation
+
+Follow `.claude/skills/testing/playwright/playwright-report/SKILL.md`.
+
+Run this phase after every full test execution — both mid-cycle (after heal iterations) and at final delivery.
+
+Steps:
+
+1. Confirm `reports/junit.xml` exists and is non-empty. If missing, re-run tests with the JUnit reporter enabled.
+2. Run the report generator:
+   ```bash
+   cd output/<site>/test && npm run report:pdf
+   ```
+   Or with a custom title (use the `--title` argument if provided by the user):
+   ```bash
+   cd output/<site>/test && node scripts/generate-report.mjs --title "<custom title>"
+   ```
+3. Verify the script exits with code 0. If it exits non-zero, read the error output, fix the issue, and re-run.
+4. Verify `reports/client-report-<timestamp>.pdf` exists and is > 10KB.
+5. Run the quality checklist from `playwright-report/SKILL.md`:
+   - Pass rate = passed / (total - skipped) ✓
+   - Failed count in summary = entries in failed detail section ✓
+   - No "undefined" / "null" / "NaN" in report ✓
+   - PDF > 10KB ✓
+   - All suite names consistent across sections ✓
+6. If `specs/brd-context.md` exists, confirm the traceability section rendered in the PDF.
+7. Report the PDF path to the user: `output/<site>/test/reports/client-report-<timestamp>.pdf`
+
+**Do not mark the run complete until the PDF passes all quality checks.**
+
+---
+
+## Phase 8: Acceptance Criteria
 
 Do not mark complete until all are true:
 
 - [ ] `npm install` succeeded in `output/<site>/test/`
 - [ ] Plan saved to `output/<site>/test/specs/ui-complete-plan.md`
 - [ ] All P0 scenarios have a generated test file
-- [ ] All P1 scenarios have a generated test file (or explicitly deferred with reason)
+- [ ] All P1 scenarios have a generated test file (or explicitly deferred with documented reason)
+- [ ] Coverage audit ran and produced a final coverage report
+- [ ] Every missing P0/P1 scenario was generated or has a documented gap reason
 - [ ] Smoke suite passes
 - [ ] Core regression suite passes
-- [ ] No blocking failures remain
-- [ ] Analytics report delivered
+- [ ] No blocking failures remain without documented reason
+- [ ] `reports/junit.xml` exists and is non-empty
+- [ ] PDF report generated at `reports/client-report-<timestamp>.pdf`
+- [ ] PDF passes all quality checks (size > 10KB, accurate counts, no placeholder text)
+- [ ] If `input/` had files: `specs/brd-context.md` exists and traceability section is in the PDF
 - [ ] All test artifacts confined to `output/<site>/test/`
 
 ---
@@ -342,15 +515,20 @@ At completion, provide:
 2. **Run commands**:
    - `cd output/<site>/test && npx playwright test`
    - `cd output/<site>/test && npm run test:smoke`
+   - `cd output/<site>/test && npm run report:pdf`
 3. **Plan summary**: scenario counts by priority and type
-4. **Test file list**: all generated `.spec.ts` paths
-5. **Final analytics**: total / passed / failed / skipped / pass rate / iterations
-6. **Known gaps**: any scenarios deferred or marked `test.fixme()` with reasons
+4. **Coverage audit result**: planned / generated / missing / gaps with reasons
+5. **Test file list**: all generated `.spec.ts` paths
+6. **Final analytics**: total / passed / failed / skipped / pass rate / iterations
+7. **PDF report path**: `output/<site>/test/reports/client-report-<timestamp>.pdf`
+8. **Known gaps**: any scenarios deferred or marked `test.fixme()` with reasons
+9. **Requirements coverage** (only if `input/` had files): requirements covered / partial / blocked
 
 ---
 
 ## Notes
 
+- The `input/` folder is at the project root (same level as `output/`). Drop requirements files there before running — the skill reads them automatically.
 - Never write `test-results/`, `playwright-report/`, trace blobs, or reporter output outside `output/<site>/test/`.
 - If the target site has auth, create a `tests/.auth/` state file via the seed and reuse it in fixtures — never hardcode credentials in test files.
 - For multilingual sites, include at least one assertion per locale-critical flow; prefer role/structure locators over language-specific text.

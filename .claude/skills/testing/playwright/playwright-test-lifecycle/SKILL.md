@@ -112,9 +112,11 @@ Choose exactly one mode per run:
 - `plan` when no reliable scenario plan exists yet
 - `generate` when a scenario is already defined and needs a spec file
 - `heal` when a test is failing or flaky
+- `audit` after all generation is done — compares plan vs generated specs and fills gaps
 
 Do not run `generate` before scenario requirements are clear.
 Do not run `heal` before reproducing the failure.
+Do not run `audit` before at least one generation pass has completed.
 
 ## Required Conventions
 
@@ -199,6 +201,32 @@ Workflow:
    - `output/<site>/test/specs/ui-complete-plan.md`
    via `planner_save_plan`.
 
+### Optional: Requirements Enrichment (auto — reads from `input/` context)
+
+If requirements context was passed from the orchestrator (content read from `input/` files):
+
+1. Read the requirements file. Accept Markdown, plain text, Word-exported text — any format.
+2. Extract every user story, acceptance criterion, or named requirement. Recognise these patterns:
+   - `US-NNN:` or `US NNN` prefixed lines
+   - `As a <role> I want to <action>` sentences
+   - `- [ ] <requirement>` checklist items
+   - `The system shall / must / should <behaviour>` lines
+   - Section headings followed by bullet lists of criteria
+3. For each extracted requirement:
+   - Find the most relevant scenario in the plan (by route, keywords, or flow).
+   - Add `**User Story**: <id> — <title>` to the scenario's detail block.
+   - Append any acceptance criteria not already covered to the scenario's **Assertions** list.
+4. If a user story has no matching UI scenario, add a new scenario at the appropriate priority (P0 for "must/shall", P1 for "should").
+5. After the plan is saved, write `output/<site>/test/specs/brd-context.md`:
+   ```markdown
+   ## <US-ID>: <Title>
+   Mapped: <comma-separated scenario IDs>
+   ```
+   One `##` block per user story. This file feeds the PDF traceability matrix.
+6. Log summary: `N requirements extracted, M mapped, K new scenarios added`.
+
+If requirements context is null (no files in `input/`), skip this section entirely — do not mention it in the output.
+
 Plan must include these sections in order:
 
 1. Application Overview
@@ -207,6 +235,7 @@ Plan must include these sections in order:
 4. Scenario Matrix (P0/P1/P2 priority)
 5. Detailed Scenarios
 6. Risks and Known Unknowns
+7. Requirement Coverage (only if `--brd` was provided — one row per user story with mapped scenario IDs)
 
 Detailed scenario format (mandatory):
 
@@ -288,6 +317,69 @@ Healing quality gates:
 - never exceed 3 fix attempts per test before marking `test.fixme()`
 - after fixing a shared page object, run the full suite to catch regressions in other specs that use it
 
+### Mode: audit
+
+Purpose: compare the plan against generated spec files, identify any missing scenarios, and generate them.
+
+This mode is the quality gate between test generation and PDF reporting. It ensures the plan is fully reflected in the test suite.
+
+Workflow:
+
+1. **Read the plan** — parse `output/<site>/test/specs/ui-complete-plan.md` and extract all scenario IDs using the pattern `**ID**: UI-<ROUTE>-<NN>`. Collect priority for each ID.
+
+2. **Read generated specs** — scan `output/<site>/test/tests/generated/*.spec.ts`. For each file:
+   - Extract the scenario ID from the filename (normalise to `UI-ROUTE-NN` uppercase)
+   - Confirm the ID appears in the test title inside the file (use this as the authoritative source if they differ)
+   - Mark the scenario as `generated`
+
+3. **Compute coverage diff**:
+   ```
+   missing = { id | id in planned_P0_P1 AND id not in generated }
+   extra   = { id | id in generated AND id not in planned }
+   ```
+   P2 stubs with no step list are excluded from `missing` — they are intentionally deferred.
+
+4. **Log coverage table** (always, even if coverage is 100%):
+   ```
+   Planned P0  : N  |  Generated P0  : N  |  Missing P0  : N
+   Planned P1  : N  |  Generated P1  : N  |  Missing P1  : N
+   P2 stubs    : N  (deferred — not generated)
+   Coverage    : NN%
+   ```
+
+5. **Generate missing scenarios** — for each missing P0/P1 scenario:
+   - Locate its full detail block in the plan.
+   - Run `generate` mode for that scenario (same quality gates apply).
+   - Immediately run the generated test and heal if needed (3-attempt cap).
+   - Update the coverage table entry to `generated ✓` or `fixme (reason)`.
+
+6. **Re-run full suite** after all missing specs are generated.
+
+7. **Final report** — produce a markdown summary block:
+   ```
+   Coverage Audit — Final
+   ──────────────────────────────────────────
+   Planned (P0+P1)       : N
+   Generated (P0+P1)     : N    [NN%]
+   Previously missing    : N → [list of IDs]
+     Now generated       : N
+     Marked fixme        : N  (reasons listed below)
+   P2 stubs deferred     : N
+   Extra (unplanned)     : N
+   ──────────────────────────────────────────
+   Gaps with reasons:
+   - UI-NAV-02  : test.fixme — app-defect, contact endpoint returns 500
+   - UI-HOME-07 : test.fixme — auth required, credentials not available in CI
+   ──────────────────────────────────────────
+   ```
+
+Audit quality gates:
+
+- Every P0 and P1 scenario must be generated or have a documented gap reason
+- Extra specs (in `generated/` but not in the plan) must be flagged to the user — they may be duplicates or orphans
+- Do not modify the plan during audit — only read it
+- Do not rewrite existing passing specs during audit — only create new ones for missing IDs
+
 ## Output Contract
 
 ### For `plan`
@@ -326,6 +418,14 @@ The generated file must:
 - Revalidate after each fix.
 - Patch test files in `output/<site>/test/tests/generated/`.
 
+### For `audit`
+
+- Output is a coverage summary markdown block (logged to console and saved to `output/<site>/test/specs/coverage-audit.md`).
+- Lists planned count, generated count, missing IDs, and gap reasons.
+- Every missing P0/P1 scenario is either generated or has a documented reason.
+- Does not modify the plan or any existing passing spec.
+- New specs created during audit follow identical conventions to Phase 4 generation.
+
 ## Tooling
 
 Use the Playwright test MCP toolset across planning, generation, and healing:
@@ -343,9 +443,12 @@ Use these mode-specific forms:
 
 - `plan <target-url-or-scope>`
 - `generate <test-suite> <test-name> <test-file> <seed-file>`
+- `audit <site-slug>`
 - `heal <test-file-or-pattern>`
 
 If inputs are missing, request only the missing mode arguments.
+
+Requirements enrichment in `plan` mode is auto-triggered when the orchestrator passes input-folder content. It is never triggered by a flag in this skill directly.
 
 ## Non-goals
 
@@ -370,6 +473,7 @@ For content-rich Japanese travel portals with mixed JP/EN UI:
 ## Reference Docs
 
 - `.claude/skills/testing/playwright/playwright-pom/SKILL.md` — **canonical POM structure** every generated test and page object must follow
+- `.claude/skills/testing/playwright/playwright-report/SKILL.md` — **PDF report generation** run after every test execution
 - `.claude/skills/testing/playwright/playwright-official/SKILL.md` — official Playwright baseline this lifecycle stays compatible with
 - `.claude/skills/testing/playwright/playwright-cli/SKILL.md` — interactive browser-CLI reference for ad-hoc planning/debugging
 - `.claude/skills/testing/playwright/playwright-cli/references/spec-driven-testing.md` — supplementary plan/generate/heal CLI workflow
