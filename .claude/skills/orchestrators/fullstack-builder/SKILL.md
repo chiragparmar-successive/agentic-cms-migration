@@ -38,10 +38,12 @@ You MUST:
    - Phase A: `.claude/skills/phase-a/site-crawler/SKILL.md`
    - Phase A: `.claude/skills/phase-a/wp-source-adapter/SKILL.md`
    - Phase A: `.claude/skills/phase-a/content-model-inferencer/SKILL.md`
-   - Phase B: `.claude/skills/phase-b/playwright-suite-generator/SKILL.md`
-   - Phase B: `.claude/skills/phase-b/baseline-runner/SKILL.md`
-   - Phase B: `.claude/skills/phase-b/playwright-test-lifecycle/SKILL.md`
-   - Phase B: `.claude/skills/phase-b/playwright-official/SKILL.md`
+   - Phase B command: `.claude/commands/phase-b.md`
+   - Phase B: `.claude/skills/testing/playwright/playwright-exploratory/SKILL.md`
+   - Phase B: `.claude/skills/testing/playwright/playwright-test-lifecycle/SKILL.md`
+   - Phase B: `.claude/skills/testing/playwright/playwright-official/SKILL.md`
+   - Phase B: `.claude/skills/testing/playwright/playwright-cli/SKILL.md`
+   - Phase B: `.claude/skills/testing/playwright/playwright-pom/SKILL.md`
    - Phase C: `.claude/skills/phase-c/strapi-schema-generator/SKILL.md`
    - Phase C: `.claude/skills/phase-c/strapi-bootstrapper/SKILL.md`
    - Phase C: `.claude/skills/phase-c/content-etl-pipeline/SKILL.md`
@@ -57,7 +59,7 @@ You MUST:
    - Vercel: `.claude/skills/frontend/vercel/next-best-practices/SKILL.md`
    - Vercel: `.claude/skills/frontend/vercel/vercel-react-best-practices/SKILL.md`
    - Vercel: `.claude/skills/frontend/vercel/vercel-composition-patterns/SKILL.md`
-   If any are missing, **stop and report** which prerequisites are unavailable.
+     If any are missing, **stop and report** which prerequisites are unavailable.
 
 2. Verify browser automation MCP is available.
 
@@ -72,6 +74,7 @@ You MUST:
 ### A.1: Site Crawling
 
 Use `site-crawler` skill:
+
 - Crawl all pages from URL/sitemap
 - Extract DOM, routes, media, sitemaps
 - Produce site inventory in `output/<site>/docs/research/`
@@ -79,46 +82,63 @@ Use `site-crawler` skill:
 ### A.2: WordPress Adapter (optional)
 
 Use `wp-source-adapter` skill — only if WordPress detected:
+
 - Extract content via WP-JSON REST API
 - Map WP data structures to content model candidates
 
 ### A.3: Content Model Inference
 
 Use `content-model-inferencer` skill:
+
 - Analyse crawled data and produce Content Model Spec
 - Generate `output/<site>/docs/content-model/SCHEMA-DESIGN.md`
 
 ### ✋ CHECKPOINT 1 — Human Approves Content Model Spec
 
 Present to human:
+
 - Content Model Spec summary (types, fields, relationships)
 - Coverage assessment
 - **Wait for explicit approval before proceeding.**
 
 ---
 
-## Phase B — Test-First Contract
+## Phase 2: Test-First Contract (Phase B)
 
-### B.1: Test Suite Generation
+**Execute Phase B in full — identical to running `/phase-b <url>` standalone.**
 
-Use `playwright-suite-generator` skill:
-- Generate comprehensive Playwright test suite from approved model spec
-- Cover route / content / SEO / ARIA / visual tests
-- Output to `output/<site>/test/tests/generated/`
+Read and follow `.claude/commands/phase-b.md` exactly. Do not shortcut or skip any step.
 
-### B.2: Legacy Baseline Run
+Phase B uses all five Playwright skills in order:
 
-Use `baseline-runner` skill:
-- Run test suite against legacy source site
-- Establish green baseline + visual snapshots
-- Ensure good pass percentage on source URL
+1. `playwright-exploratory` — full-site crawl + full-page baseline screenshots
+2. `playwright-test-lifecycle` — plan → generate → heal lifecycle
+3. `playwright-official` — Playwright project conventions
+4. `playwright-cli` — browser automation via MCP
+5. `playwright-pom` — page object model for all generated specs
+
+Phase B steps that MUST complete before moving to Phase 3:
+
+- Exploratory crawl complete — `output/<site>/test/exploratory/baseline/index.json` written
+- Baseline screenshots captured for all crawled routes
+- Test plan saved to `output/<site>/test/specs/ui-complete-plan.md`
+- All P0 and P1 scenarios have generated test files
+- Smoke and core regression suites pass against the legacy site
+- **CHECKPOINT 2 gate passed** — human has approved the test suite
+- `output/<site>/test/specs/CONTRACT.md` written
+
+Do not proceed to Phase 3 until `CONTRACT.md` exists and Checkpoint 2 is approved.
+
+All Playwright artifacts confined to `output/<site>/test/` — never at the repo root.
 
 ### ✋ CHECKPOINT 2 — Human Approves Test Suite
 
-Present to human:
-- Pass/fail summary against legacy site
-- Visual baselines
-- Coverage assessment
+Follow Step 7 of `.claude/commands/phase-b.md`. Present to human:
+
+- Scenario summary (ID / priority / status) and final pass-rate analytics
+- Paths to generated tests and exploratory baseline screenshots
+- Any `test.fixme()` gaps with reasons
+- **Write `CONTRACT.md` only after explicit approval** (Step 8 of `phase-b.md`)
 - **After approval, the test suite becomes an immutable behavioral contract.**
 - **Wait for explicit approval before proceeding.**
 
@@ -129,11 +149,13 @@ Present to human:
 ### C.1: Schema Generation
 
 Use `strapi-schema-generator` skill:
+
 - Generate Strapi 5 JSON schemas from approved Content Model Spec
 
 ### C.2: Strapi Bootstrap
 
 Use `strapi-bootstrapper` skill:
+
 - Initialise Strapi 5 project in `output/<site>/cms/`
 - Apply schemas, enable GraphQL, configure roles & permissions
 - Verify build and dev server
@@ -141,6 +163,7 @@ Use `strapi-bootstrapper` skill:
 ### C.3: Content ETL
 
 Use `content-etl-pipeline` skill:
+
 - Extract content from source
 - Transform to match Strapi schemas
 - Load into CMS with media optimisation (WebP/AVIF)
@@ -149,6 +172,7 @@ Use `content-etl-pipeline` skill:
 ### C.4: GraphQL Validation
 
 Use `graphql-layer-validator` skill:
+
 - Introspect GraphQL schema
 - Run graphql-codegen for TypeScript types
 - Verify type coverage
@@ -160,18 +184,21 @@ Use `graphql-layer-validator` skill:
 ### D.1: Next.js Scaffolding
 
 Use `nextjs-scaffolder` skill:
+
 - Initialise Next.js 16 project (TS strict, Tailwind, App Router, RSC)
 - Set up environment variables for CMS
 
 ### D.2: CMS Adapter
 
 Use `cms-adapter-generator` skill:
+
 - Generate ICMSAdapter interface + StrapiAdapter implementation
 - Wire into Next.js app
 
 ### D.3: Page + Component Generation
 
 Use `page-component-generator` skill:
+
 - Generate RSC pages, layouts, components via Claude API
 - Wire to CMS adapter
 - Apply Vercel best practices
@@ -179,6 +206,7 @@ Use `page-component-generator` skill:
 ### D.4: Route Validation
 
 Use `route-validator` skill:
+
 - Confirm URL parity between source and target
 - Block Phase E if missing routes exist
 
@@ -189,6 +217,7 @@ Use `route-validator` skill:
 ### E.1: Playwright Behavioral Parity
 
 Use `playwright-behavioral-parity` skill:
+
 - Run approved test suite against new stack
 - Compare with legacy baseline
 - Report regressions
@@ -196,12 +225,14 @@ Use `playwright-behavioral-parity` skill:
 ### E.2: SonarQube Code Quality Gate
 
 Use `sonarqube-gate` skill:
+
 - Analyse code quality
 - Enforce quality thresholds
 
 ### E.3: Lighthouse CI Performance Gate
 
 Use `lighthouse-ci-gate` skill:
+
 - Analyse performance, accessibility, best practices, SEO
 - Enforce score thresholds
 
@@ -214,6 +245,7 @@ If **ANY gate fails** → trigger AI Remediation:
 ### E.4: AI Remediation (max 5 iterations)
 
 Use `ai-remediation-agent` skill:
+
 - Analyse failures, generate patches, apply fixes
 - Re-run all quality gates
 - Iterate up to 5 times
@@ -222,6 +254,7 @@ Use `ai-remediation-agent` skill:
 ### ✋ CHECKPOINT 4 — Pre-Deployment Sign-Off
 
 Present to human:
+
 - All quality gate results
 - Content parity status
 - Visual parity screenshots
@@ -236,7 +269,7 @@ Present to human:
 Do not mark complete until ALL are true:
 
 - [ ] Phase A: Content Model Spec approved (CHECKPOINT 1)
-- [ ] Phase B: Test suite approved (CHECKPOINT 2), good pass % on source
+- [ ] Phase B: `CONTRACT.md` present, test suite approved (CHECKPOINT 2), green smoke/core regression on legacy site
 - [ ] Phase C: Strapi builds, runs, content loaded, GraphQL validated
 - [ ] Phase D: Next.js builds, runs, all routes covered, CMS wired
 - [ ] Phase E: All quality gates pass (or max iterations with human acceptance)

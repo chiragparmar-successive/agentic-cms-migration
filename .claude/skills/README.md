@@ -17,6 +17,8 @@ Skills are grouped by **phase** first, then by **skill name**. Entry point for e
     playwright-test-lifecycle/SKILL.md
     playwright-official/SKILL.md
     playwright-cli/SKILL.md
+    playwright-pom/SKILL.md
+
   phase-c/                          # CMS Provisioning
     strapi-schema-generator/SKILL.md
     strapi-bootstrapper/SKILL.md
@@ -64,9 +66,9 @@ Folders under `frontend/vercel/` are pinned in **`skills-lock.json`** at the rep
 
 ## Checkpoints
 
-| Checkpoint | Location | Gate |
-|------------|----------|------|
-| 1 | End of Phase A | Human approves Content Model Spec |
-| 2 | End of Phase B | Human approves Test Suite (immutable behavioral contract) |
-| 3 | Phase E gate | All quality gates pass (Playwright + SonarQube + Lighthouse) |
-| 4 | End of Phase E | Pre-Deployment Sign-Off (human approves for deploy) |
+| Checkpoint | Location       | Gate                                                         |
+| ---------- | -------------- | ------------------------------------------------------------ |
+| 1          | End of Phase A | Human approves Content Model Spec                            |
+| 2          | End of Phase B | Human approves Test Suite (immutable behavioral contract)    |
+| 3          | Phase E gate   | All quality gates pass (Playwright + SonarQube + Lighthouse) |
+| 4          | End of Phase E | Pre-Deployment Sign-Off (human approves for deploy)          |

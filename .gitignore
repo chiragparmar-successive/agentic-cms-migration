@@ -33,3 +33,6 @@ Thumbs.db
 
 # Local generated workspace output
 output/
+
+.playwright-mcp/
+.claude/.playwright-mcp/

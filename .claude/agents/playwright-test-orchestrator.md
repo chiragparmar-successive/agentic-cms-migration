@@ -12,6 +12,8 @@ Canonical skills:
 
 - `.claude/skills/phase-b/playwright-test-lifecycle/SKILL.md`
 - `.claude/skills/phase-b/playwright-official/SKILL.md`
+- `.claude/skills/phase-b/playwright-pom/SKILL.md`
+<!-- - `.claude/skills/phase-b/playwright-report/SKILL.md` TODO -->
 
 ## Routing Rules
 
