@@ -10,11 +10,12 @@ The test suite produced here becomes the immutable behavioral contract that Phas
 
 ### Skills Used (in order)
 
-1. `.claude/skills/testing/playwright/playwright-exploratory/SKILL.md` — full-site crawl + baseline screenshots
-2. `.claude/skills/testing/playwright/playwright-test-lifecycle/SKILL.md` — plan → generate → heal lifecycle
-3. `.claude/skills/testing/playwright/playwright-official/SKILL.md` — Playwright project conventions
-4. `.claude/skills/testing/playwright/playwright-cli/SKILL.md` — browser automation via MCP
-5. `.claude/skills/testing/playwright/playwright-pom/SKILL.md` — page object model structure
+1. `.claude/skills/phase-b/playwright-exploratory/SKILL.md` — full-site crawl + baseline screenshots
+2. `.claude/skills/phase-b/playwright-test-lifecycle/SKILL.md` — plan → generate → heal lifecycle
+3. `.claude/skills/phase-b/playwright-official/SKILL.md` — Playwright project conventions
+4. `.claude/skills/phase-b/playwright-cli/SKILL.md` — browser automation via MCP
+5. `.claude/skills/phase-b/playwright-pom/SKILL.md` — page object model structure
+6. `.claude/skills/phase-b/playwright-report/SKILL.md` — client-presenting PDF report (run after every test execution)
 
 Arguments: $ARGUMENTS
 

@@ -270,7 +270,7 @@ export { expect } from "@playwright/test";
 
 Copy the full script template verbatim from `.claude/skills/phase-b/playwright-report/SKILL.md`. Do not truncate or paraphrase it — the script must be complete and runnable.
 
-The report is a multi-section, chart-rich PDF (cover • executive summary • quality dashboard • failure analysis • performance • suite breakdown • coverage audit • requirements traceability • environment • appendix). See `playwright-report/SKILL.md` for the full PDF anatomy and quality checklist.
+Before editing or reviewing the script, read **`.claude/skills/phase-b/playwright-report/PROMPT.md`** — that is the authoritative prompt for the report (10-section anatomy, narrative tone, deterministic failure-category rules, visual standards, and the quality acceptance checklist). `playwright-report/SKILL.md` carries the canonical script; `PROMPT.md` carries the intent it must satisfy.
 
 ### Directory scaffold
 
@@ -462,7 +462,7 @@ If coverage is less than 100% of P0+P1 after this phase, every gap must have a d
 
 ## Phase 7: PDF Report Generation
 
-Follow `.claude/skills/phase-b/playwright-report/SKILL.md`.
+Follow `.claude/skills/phase-b/playwright-report/SKILL.md` for the runnable script and `.claude/skills/phase-b/playwright-report/PROMPT.md` for the authoritative prompt (content, tone, visual rules, acceptance checklist).
 
 Run this phase after every full test execution — both mid-cycle (after heal iterations) and at final delivery.
 
