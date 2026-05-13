@@ -323,7 +323,7 @@ Generation quality gates (all mandatory):
 - `logger.info` / `logger.error` used instead of `console.log`.
 - Path alias imports only (`@fixtures/`, `@utils/`, `@config/`, `@pages/`, `@components/`).
 - Update `fixtures/pages.fixture.ts` whenever a new page or component object is created.
-- Follow the full POM structure defined in `.claude/skills/testing/playwright/playwright-pom/SKILL.md`.
+- Follow the full POM structure defined in `.claude/skills/phase-b/playwright-pom/SKILL.md`.
 
 ---
 
@@ -549,4 +549,4 @@ At completion, provide:
 - For multilingual sites, include at least one assertion per locale-critical flow; prefer role/structure locators over language-specific text.
 - If a selector is uncertain, always inspect the DOM snapshot first; place the locator in the page object getter with a comment explaining the strategy.
 - Fix root causes, not assertion surfaces.
-- All generated tests must follow the POM structure defined in `.claude/skills/testing/playwright/playwright-pom/SKILL.md` — read it before generating any page object or spec file.
+- All generated tests must follow the POM structure defined in `.claude/skills/phase-b/playwright-pom/SKILL.md` — read it before generating any page object or spec file.

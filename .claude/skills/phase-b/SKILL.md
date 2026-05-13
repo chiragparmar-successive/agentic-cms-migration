@@ -31,7 +31,7 @@ playwright-official (runner config & bootstrap)
 
 Full paths always include the `playwright/` segment, for example:
 
-- `.claude/skills/testing/playwright/playwright-test-lifecycle/SKILL.md`
-- `.claude/skills/testing/playwright/playwright-pom/SKILL.md`
+- `.claude/skills/phase-b/playwright-test-lifecycle/SKILL.md`
+- `.claude/skills/phase-b/playwright-pom/SKILL.md`
 
-Agents that use these skills live under `.claude/agents/testing/playwright/`.
+Agents that use these skills live under `.claude/agents/`.

@@ -315,6 +315,6 @@ This makes exploratory crawl the natural first step before `playwright-test-gen`
 
 ## Reference
 
-- `.claude/skills/testing/playwright/playwright-pom/SKILL.md` — POM structure all generated code follows
-- `.claude/skills/testing/playwright/playwright-test-lifecycle/SKILL.md` — plan / generate / heal lifecycle
-- `.claude/skills/orchestrators/playwright-test-gen/SKILL.md` — full orchestration workflow
+- `.claude/skills/phase-b/playwright-pom/SKILL.md` — POM structure all generated code follows
+- `.claude/skills/phase-b/playwright-test-lifecycle/SKILL.md` — plan / generate / heal lifecycle
+- `.claude/skills/phase-b/playwright-test-gen/SKILL.md` — full orchestration workflow

@@ -39,11 +39,11 @@ You MUST:
    - Phase A: `.claude/skills/phase-a/wp-source-adapter/SKILL.md`
    - Phase A: `.claude/skills/phase-a/content-model-inferencer/SKILL.md`
    - Phase B command: `.claude/commands/phase-b.md`
-   - Phase B: `.claude/skills/testing/playwright/playwright-exploratory/SKILL.md`
-   - Phase B: `.claude/skills/testing/playwright/playwright-test-lifecycle/SKILL.md`
-   - Phase B: `.claude/skills/testing/playwright/playwright-official/SKILL.md`
-   - Phase B: `.claude/skills/testing/playwright/playwright-cli/SKILL.md`
-   - Phase B: `.claude/skills/testing/playwright/playwright-pom/SKILL.md`
+   - Phase B: `.claude/skills/phase-b/playwright-exploratory/SKILL.md`
+   - Phase B: `.claude/skills/phase-b/playwright-test-lifecycle/SKILL.md`
+   - Phase B: `.claude/skills/phase-b/playwright-official/SKILL.md`
+   - Phase B: `.claude/skills/phase-b/playwright-cli/SKILL.md`
+   - Phase B: `.claude/skills/phase-b/playwright-pom/SKILL.md`
    - Phase C: `.claude/skills/phase-c/strapi-schema-generator/SKILL.md`
    - Phase C: `.claude/skills/phase-c/strapi-bootstrapper/SKILL.md`
    - Phase C: `.claude/skills/phase-c/content-etl-pipeline/SKILL.md`
