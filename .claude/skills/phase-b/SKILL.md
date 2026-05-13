@@ -1,16 +1,16 @@
 # Testing skills
 
-All Playwright-related skills live under **`playwright/`** so this domain can grow (e.g. other runners) without mixing folders at the `testing/` root.
+All Playwright-related skills in this phase live under **`phase-b/`**, keeping Phase B testing capabilities grouped in one location.
 
 ## Skills
 
 | Folder                                  | Role                                                                                                                                                 | User-invocable |
 | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
-| `playwright/playwright-test-lifecycle/` | Canonical **plan → generate → heal** lifecycle.                                                                                                      | No             |
-| `playwright/playwright-official/`       | Official runner/config baseline; `bootstrap` / `verify` / `run`.                                                                                     | No             |
-| `playwright/playwright-cli/`            | Standalone **playwright-cli** command reference + `references/`; optional interactive debugging.                                                     | No             |
-| `playwright/playwright-exploratory/`    | Crawl every link on a site, capture visual + text baseline, generate a replayable smoke spec. Modes: `crawl <url>` / `replay <site-slug>`.           | Yes            |
-| `playwright/playwright-pom/`            | Page Object Model conventions — canonical structure all generated test files must follow. Not invoked directly; read by generator and healer agents. | No             |
+| `playwright-test-lifecycle/`            | Canonical **plan → generate → heal** lifecycle.                                                                                                      | No             |
+| `playwright-official/`                  | Official runner/config baseline; `bootstrap` / `verify` / `run`.                                                                                     | No             |
+| `playwright-cli/`                       | Standalone **playwright-cli** command reference + `references/`; optional interactive debugging.                                                     | No             |
+| `playwright-exploratory/`               | Crawl every link on a site, capture visual + text baseline, generate a replayable smoke spec. Modes: `crawl <url>` / `replay <site-slug>`.           | Yes            |
+| `playwright-pom/`                       | Page Object Model conventions — canonical structure all generated test files must follow. Not invoked directly; read by generator and healer agents. | No             |
 
 ## Skill relationships
 
@@ -29,7 +29,7 @@ playwright-official (runner config & bootstrap)
 
 ## Path convention
 
-Full paths always include the `playwright/` segment, for example:
+Full paths use the `.claude/skills/phase-b/` base, for example:
 
 - `.claude/skills/phase-b/playwright-test-lifecycle/SKILL.md`
 - `.claude/skills/phase-b/playwright-pom/SKILL.md`

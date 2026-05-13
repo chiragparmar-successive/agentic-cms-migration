@@ -120,7 +120,7 @@ Do not run `audit` before at least one generation pass has completed.
 
 ## Required Conventions
 
-All generated code must follow these rules. The canonical structure is defined in `.claude/skills/testing/playwright/playwright-pom/SKILL.md` — read it before generating any test or page object.
+All generated code must follow these rules. The canonical structure is defined in `.claude/skills/phase-b/playwright-pom/SKILL.md` — read it before generating any test or page object.
 
 1. **Imports** use path aliases only.
    - Spec files: import `test` and `expect` from `@fixtures/pages.fixture` — never directly from `@playwright/test`.
