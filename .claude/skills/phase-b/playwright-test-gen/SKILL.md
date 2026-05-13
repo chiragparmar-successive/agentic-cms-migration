@@ -40,10 +40,10 @@ You MUST:
 ## Phase 1: Preconditions
 
 1. Verify dependent skills are readable:
-   - `.claude/skills/testing/playwright/playwright-test-lifecycle/SKILL.md`
-   - `.claude/skills/testing/playwright/playwright-official/SKILL.md`
-   - `.claude/skills/testing/playwright/playwright-cli/SKILL.md`
-   - `.claude/skills/testing/playwright/playwright-report/SKILL.md`
+   - `.claude/skills/phase-b/playwright-test-lifecycle/SKILL.md`
+   - `.claude/skills/phase-b/playwright-official/SKILL.md`
+   - `.claude/skills/phase-b/playwright-cli/SKILL.md`
+   - `.claude/skills/phase-b/playwright-report/SKILL.md`
 2. Verify browser automation is available (MCP Playwright tools or `playwright-cli`).
 3. Validate and normalise the URL argument (add `https://` if scheme is missing).
 4. Derive `<site>` slug: lowercase hostname, dots and slashes replaced with `-`.
@@ -268,7 +268,9 @@ export { expect } from "@playwright/test";
 
 ### `scripts/generate-report.mjs` (required — create during bootstrap)
 
-Copy the full script template verbatim from `.claude/skills/testing/playwright/playwright-report/SKILL.md`. Do not truncate or paraphrase it — the script must be complete and runnable.
+Copy the full script template verbatim from `.claude/skills/phase-b/playwright-report/SKILL.md`. Do not truncate or paraphrase it — the script must be complete and runnable.
+
+The report is a multi-section, chart-rich PDF (cover • executive summary • quality dashboard • failure analysis • performance • suite breakdown • coverage audit • requirements traceability • environment • appendix). See `playwright-report/SKILL.md` for the full PDF anatomy and quality checklist.
 
 ### Directory scaffold
 
@@ -460,9 +462,11 @@ If coverage is less than 100% of P0+P1 after this phase, every gap must have a d
 
 ## Phase 7: PDF Report Generation
 
-Follow `.claude/skills/testing/playwright/playwright-report/SKILL.md`.
+Follow `.claude/skills/phase-b/playwright-report/SKILL.md`.
 
 Run this phase after every full test execution — both mid-cycle (after heal iterations) and at final delivery.
+
+The output is **not** a basic results dump. It is a client-presenting PDF with: cover + verdict badge, executive KPI cards, donut/stacked-bar/horizontal-bar charts, failure-category breakdown, performance percentiles, suite breakdown, coverage audit gauge, requirements traceability matrix, and a full appendix.
 
 Steps:
 
@@ -476,15 +480,20 @@ Steps:
    cd output/<site>/test && node scripts/generate-report.mjs --title "<custom title>"
    ```
 3. Verify the script exits with code 0. If it exits non-zero, read the error output, fix the issue, and re-run.
-4. Verify `reports/client-report-<timestamp>.pdf` exists and is > 10KB.
-5. Run the quality checklist from `playwright-report/SKILL.md`:
-   - Pass rate = passed / (total - skipped) ✓
-   - Failed count in summary = entries in failed detail section ✓
-   - No "undefined" / "null" / "NaN" in report ✓
-   - PDF > 10KB ✓
-   - All suite names consistent across sections ✓
-6. If `specs/brd-context.md` exists, confirm the traceability section rendered in the PDF.
-7. Report the PDF path to the user: `output/<site>/test/reports/client-report-<timestamp>.pdf`
+4. Verify `reports/client-report-<timestamp>.pdf` exists and is > 50 KB.
+5. Run the **full** quality checklist from `playwright-report/SKILL.md`:
+   - Cover page renders the verdict badge ✓
+   - KPI totals reconcile (Total = Passed + Failed + Skipped) ✓
+   - Pass rate = passed / (total - skipped), one decimal ✓
+   - Every chart legend matches its data colours ✓
+   - Failure count in summary equals rows in Failure Analysis table ✓
+   - No "undefined" / "null" / "NaN" / "[object Object]" anywhere ✓
+   - PDF > 50 KB ✓
+   - Page numbers appear on every page after the cover ✓
+6. If `specs/brd-context.md` exists, confirm the Requirements Traceability section rendered with at least one row.
+7. If `specs/coverage-audit.md` exists, confirm the Coverage Audit gauge + bar chart rendered.
+8. Confirm `reports/summary.json` was also written (machine-readable counterpart to the PDF).
+9. Report the PDF path to the user: `output/<site>/test/reports/client-report-<timestamp>.pdf`
 
 **Do not mark the run complete until the PDF passes all quality checks.**
 
@@ -505,8 +514,10 @@ Do not mark complete until all are true:
 - [ ] No blocking failures remain without documented reason
 - [ ] `reports/junit.xml` exists and is non-empty
 - [ ] PDF report generated at `reports/client-report-<timestamp>.pdf`
-- [ ] PDF passes all quality checks (size > 10KB, accurate counts, no placeholder text)
+- [ ] PDF passes all quality checks (size > 50 KB, accurate counts, no placeholder text, all charts render)
+- [ ] `reports/summary.json` exists alongside the PDF
 - [ ] If `input/` had files: `specs/brd-context.md` exists and traceability section is in the PDF
+- [ ] If coverage audit ran: `specs/coverage-audit.md` exists and Coverage section is in the PDF
 - [ ] All test artifacts confined to `output/<site>/test/`
 
 ---

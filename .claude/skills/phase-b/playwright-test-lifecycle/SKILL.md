@@ -476,10 +476,10 @@ For content-rich Japanese travel portals with mixed JP/EN UI:
 
 ## Reference Docs
 
-- `.claude/skills/testing/playwright/playwright-pom/SKILL.md` — **canonical POM structure** every generated test and page object must follow
-- `.claude/skills/testing/playwright/playwright-report/SKILL.md` — **PDF report generation** run after every test execution
-- `.claude/skills/testing/playwright/playwright-official/SKILL.md` — official Playwright baseline this lifecycle stays compatible with
-- `.claude/skills/testing/playwright/playwright-cli/SKILL.md` — interactive browser-CLI reference for ad-hoc planning/debugging
+- `.claude/skills/phase-b/playwright-pom/SKILL.md` — **canonical POM structure** every generated test and page object must follow
+- `.claude/skills/phase-b/playwright-report/SKILL.md` — **client-presenting PDF report generation** (cover, KPIs, charts, failure analysis, coverage, traceability) run after every test execution
+- `.claude/skills/phase-b/playwright-official/SKILL.md` — official Playwright baseline this lifecycle stays compatible with
+- `.claude/skills/phase-b/playwright-cli/SKILL.md` — interactive browser-CLI reference for ad-hoc planning/debugging
 - `.claude/skills/testing/playwright/playwright-cli/references/spec-driven-testing.md` — supplementary plan/generate/heal CLI workflow
 - `.claude/skills/testing/playwright/playwright-cli/references/playwright-tests.md` — running and debugging Playwright tests via CLI
 
