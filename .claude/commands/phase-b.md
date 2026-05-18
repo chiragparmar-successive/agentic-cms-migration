@@ -23,7 +23,7 @@ Arguments: $ARGUMENTS
 
 ## Step 1 — Preconditions
 
-1. Verify all five skill files listed above are readable.
+1. Verify all six skill files listed above are readable.
 2. Verify browser automation is available (MCP Playwright tools).
 3. Validate and normalise the URL argument (add `https://` if scheme is missing). If missing, stop and ask: `phase-b <url>`
 4. Derive `<site>` slug: lowercase hostname, dots and slashes replaced with `-`.
@@ -118,17 +118,84 @@ Stop only when all P0 and P1 tests pass with no blocking failures. Produce analy
 | Pass rate (%)       |       |
 | Iterations to green |       |
 
+**After the test run completes, you must immediately proceed to Step 6.5 to generate the reports. Do not jump to Step 7.**
+
+---
+
+## Step 6.5 — Report Generation
+
+> **You must execute every sub-step below before moving to Step 7. Do not skip this step. Do not proceed to the checkpoint until both the HTML report and the PDF report exist on disk.**
+
+### 6.5.1 — Verify `playwright.config.ts` has all three reporters
+
+Open `output/<site>/test/playwright.config.ts` and confirm the `reporter` array contains exactly these three entries. If any are missing, add them now and **re-run the full test suite** before continuing:
+
+```ts
+reporter: [
+  ["list"],
+  ["html", { outputFolder: "playwright-report", open: "never" }],
+  ["junit", { outputFile: "reports/junit.xml" }],
+],
+```
+
+### 6.5.2 — Verify `reports/junit.xml` exists and is non-empty
+
+```bash
+# Must print a non-empty XML file. If this fails, fix the reporter config and re-run tests.
+cat output/<site>/test/reports/junit.xml
+```
+
+If the file is missing or empty, do not proceed — fix the config and re-run `npx playwright test`.
+
+### 6.5.3 — Verify `scripts/generate-report.mjs` exists at the workspace root
+
+```bash
+ls scripts/generate-report.mjs
+```
+
+If the file is missing, copy the full script verbatim from `.claude/skills/phase-b/playwright-report/SKILL.md` into `scripts/generate-report.mjs` at the workspace root now.
+
+### 6.5.4 — Ensure root `package.json` has the required dependencies
+
+Confirm `package.json` at the workspace root lists `@playwright/test` and `fast-xml-parser` in `devDependencies`. If either is missing, add it and run `npm install` at the workspace root.
+
+### 6.5.5 — Run the report generator
+
+Execute this command from the workspace root (substitute the actual site slug):
+
+```bash
+node scripts/generate-report.mjs --site <site-slug>
+```
+
+This command **must exit with code 0**. If it exits non-zero, read the full error output, fix the issue, and re-run. Do not proceed to Step 7 until it succeeds.
+
+### 6.5.6 — Verify both report files exist
+
+After the script exits successfully, confirm both files are present:
+
+```bash
+ls output/<site>/test/reports/client-report-*.pdf
+ls output/<site>/test/playwright-report/index.html
+```
+
+- The PDF must be **> 10 KB**. If it is smaller, the render failed — re-run the script.
+- The HTML report at `playwright-report/index.html` is written by `npx playwright test` automatically. If it is missing, the HTML reporter was not active — fix the config and re-run tests.
+
+Only after both files are confirmed on disk may you proceed to Step 7.
+
 ---
 
 ## Step 7 — CHECKPOINT 2 (Human Approval Gate)
 
-After all P0 and P1 tests are green, **pause** and present:
+After all P0 and P1 tests are green and reports are generated, **pause** and present:
 
 - Scenario summary (ID / priority / description / status)
 - Final pass rate and analytics table
 - All generated test file paths
 - All baseline screenshot paths from Step 2
 - Any scenarios marked `test.fixme()` with reasons
+- Path to generated PDF: `output/<site>/test/reports/client-report-<timestamp>.pdf`
+- Path to HTML report: `output/<site>/test/playwright-report/index.html`
 
 Then ask:
 
@@ -164,12 +231,29 @@ On approval, write `output/<site>/test/specs/CONTRACT.md`:
 
 - exploratory/baseline/<slug>/screenshot.png
 
+## Reports
+
+- reports/client-report-<timestamp>.pdf
+- playwright-report/index.html
+
 ## Known Gaps
 
 - <any fixme'd tests with reason>
 ```
 
-This file is the handoff artifact consumed by Phases C, D, and E.
+---
+
+## ⛔ STOP — Phase B ends here
+
+**Do NOT proceed to Phase C, Phase D, or Phase E.**
+
+Phase B is a standalone phase. When invoked as `/phase-b`, it completes at `CONTRACT.md` and stops.
+
+Phase C is only triggered by:
+- The `fullstack-builder` orchestrator (which runs Phases A → B → C → D → E in sequence with human checkpoints)
+- Explicit user invocation: `/phase-c` or `fullstack-builder`
+
+If you are running inside `fullstack-builder`, it will direct you to Phase C after CHECKPOINT 2. Otherwise, report Phase B complete and wait for the user's next instruction.
 
 ---
 
@@ -184,6 +268,10 @@ Do not mark Phase B complete until all are true:
 - [ ] All P1 scenarios have a generated test file (or deferred with reason)
 - [ ] Smoke suite passes
 - [ ] Core regression suite passes
+- [ ] `playwright-report/index.html` exists (HTML report)
+- [ ] `reports/junit.xml` exists and is non-empty
+- [ ] `reports/client-report-<timestamp>.pdf` exists and is > 10 KB (PDF report)
 - [ ] Human has approved at Checkpoint 2
-- [ ] `CONTRACT.md` written
+- [ ] `CONTRACT.md` written with PDF and HTML report paths included
 - [ ] All artifacts confined to `output/<site>/test/`
+- [ ] Phase B stopped — Phase C was NOT triggered

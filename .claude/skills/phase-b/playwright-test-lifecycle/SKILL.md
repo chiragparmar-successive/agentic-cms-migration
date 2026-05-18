@@ -76,6 +76,8 @@ Always run Playwright with the config in the site test project so outputs resolv
 - Preferred: `cd output/<site>/test && npx playwright test`
 - Or: `npx playwright test -c output/<site>/test/playwright.config.ts` from repo root
 
+**Never pass `--reporter=<anything>` on the CLI.** The `--reporter` flag completely replaces all reporters defined in `playwright.config.ts` — JUnit XML, HTML report, and any other configured reporter will not run. Always let the config drive reporters; omit `--reporter` entirely.
+
 Never run `npx playwright test` from the repo root using a root-level config that writes `test-results/` at the monorepo root for site-specific suites.
 
 ## Playwright Agent Workflow Alignment
@@ -199,7 +201,7 @@ Workflow:
 7. Reference the captured baseline screenshot path in each scenario's **Assertions** section so generators can wire `toHaveScreenshot()` to the correct file.
 8. Save the complete markdown plan to:
    - `output/<site>/test/specs/ui-complete-plan.md`
-     via `planner_save_plan`.
+   via `planner_save_plan`.
 
 ### Optional: Requirements Enrichment (auto — reads from `input/` context)
 
@@ -220,7 +222,6 @@ If requirements context was passed from the orchestrator (content read from `inp
 5. After the plan is saved, write `output/<site>/test/specs/brd-context.md`:
    ```markdown
    ## <US-ID>: <Title>
-
    Mapped: <comma-separated scenario IDs>
    ```
    One `##` block per user story. This file feeds the PDF traceability matrix.
@@ -334,16 +335,13 @@ Workflow:
    - Mark the scenario as `generated`
 
 3. **Compute coverage diff**:
-
    ```
    missing = { id | id in planned_P0_P1 AND id not in generated }
    extra   = { id | id in generated AND id not in planned }
    ```
-
    P2 stubs with no step list are excluded from `missing` — they are intentionally deferred.
 
 4. **Log coverage table** (always, even if coverage is 100%):
-
    ```
    Planned P0  : N  |  Generated P0  : N  |  Missing P0  : N
    Planned P1  : N  |  Generated P1  : N  |  Missing P1  : N
@@ -359,7 +357,18 @@ Workflow:
 
 6. **Re-run full suite** after all missing specs are generated.
 
-7. **Final report** — produce a markdown summary block:
+7. **Generate PDF report (mandatory before user approval)** — run the report script from the workspace root:
+   ```bash
+   node scripts/generate-report.mjs --site <site-slug>
+   ```
+   This reads `output/<site>/test/reports/junit.xml` and writes a client-ready PDF to `output/<site>/test/reports/client-report-<timestamp>.pdf`.
+   - If the script fails (non-zero exit), fix the underlying issue before continuing.
+   - Log the full output path of the generated PDF.
+   - **Do not proceed to the final report or request user approval until the PDF is successfully generated.**
+
+8. **Await user approval** — present the PDF path and the coverage summary to the user and wait for explicit sign-off before marking the audit complete.
+
+9. **Final report** — produce a markdown summary block:
    ```
    Coverage Audit — Final
    ──────────────────────────────────────────
