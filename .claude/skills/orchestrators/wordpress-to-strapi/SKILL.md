@@ -1,7 +1,7 @@
 ---
 name: wordpress-to-strapi
 description: Hybrid WordPress → Strapi end-to-end migration. 70% deterministic scripts, 30% AI for unknown structures only. Bootstraps Strapi 5, imports content, optional Next.js frontend and quality gates.
-argument-hint: "<wordpress-url> [--cms-only] [--with-frontend] [--skip-tests]"
+argument-hint: "<wordpress-url> [--cms-only] [--skip-tests]"
 user-invocable: true
 ---
 
@@ -11,54 +11,84 @@ Production-grade migration: **scripts execute**, **AI interprets unknowns only**
 
 Does **not** replace `/fullstack-builder` — use this command when the source is WordPress and Strapi is the target CMS.
 
-## Two commands (isolated — not sync)
+## Two commands
 
-| Command | Profile | Purpose |
-|---------|---------|---------|
-| `/wordpress-to-strapi` | `preview` | Content model + schemas + **preview rows** in Strapi (WP-1 / WP-2) |
-| `/wordpress-to-strapi-full` | `full` | **Standalone full migration** — separate paths and id-map |
+| Command | What it does |
+|---------|----------------|
+| `/wordpress-to-strapi` | **E2E partial** — content model, schemas, Strapi bootstrap, import **capped** WP data |
+| `/wp-to-strapi-dn-migration` | **Data only** — full WP extract + import; **no** detect, review, or schema generation |
 
-| Path | Command 1 | Command 2 |
-|------|-----------|-----------|
+| Path | `/wordpress-to-strapi` | `/wp-to-strapi-dn-migration` |
+|------|------------------------|------------------------------|
 | WP export | `wp-migration/preview/raw/` | `wp-migration/full/raw/` |
 | Normalized | `wp-migration/preview/normalized/` | `wp-migration/full/normalized/` |
 | Import state | `preview/sync/id-map.json` | `full/sync/id-map.json` |
-| Schemas / analysis | `wp-migration/analysis/` (from preview) | Reuses preview schemas |
+| Content model | `wp-migration/analysis/` + schemas | **Skipped** — reuses command 1 |
 
-Command 2 **must not** read preview `id-map.json` or treat command 1 as incremental sync.
+Script entrypoints:
 
-Preview caps: 5 posts, 3 pages, 10 categories, 5 tags, 5 media, 2 users (`lib/sample-limits.mjs`).
+- `scripts/wp-migration/wordpress-to-strapi.mjs`
+- `scripts/wp-migration/wp-to-strapi-dn-migration.mjs`
 
-**Never run command 2 on first pass** unless the user explicitly invokes `/wordpress-to-strapi-full`.
+Partial caps: 5 posts, 3 pages, 10 categories, 5 tags, 5 media, 2 users (`lib/sample-limits.mjs`).
+
+**Never run `/wp-to-strapi-dn-migration` before `/wordpress-to-strapi` completes** (schemas + WP-1 / WP-2).
 
 ## Arguments
 
 - `$ARGUMENTS[0]` = WordPress site URL (required)
 - Optional flags (any order after URL):
-  - `--cms-only` — Strapi + content import only (skip Phase D/E)
-  - `--with-frontend` — include Phase D (Next.js) after CMS (default without `--cms-only`)
-  - `--skip-tests` — skip Phase B test contract (faster MVP; not recommended for production)
+  - **`--cms-only`** — CMS partial E2E only; skip Phase B, D, and E
+  - **`--skip-tests`** — skip Phase B (still runs frontend + quality unless `--cms-only`)
+
+Parse flags with the same rules as `scripts/wp-migration/lib/orchestrator-flags.mjs` and write/read `output/<site>/wp-migration/orchestrator-plan.json`.
+
+### Default (no flags) — full stack partial
+
+When the user passes **only the URL**, run **everything**:
+
+| Phase | Included | Skills / commands |
+|-------|----------|-------------------|
+| W | Yes | `wordpress-to-strapi.mjs`, bootstrap, partial import |
+| B | Yes | `.claude/commands/phase-b.md`, Playwright suite on **legacy WP URL** |
+| D | Yes | `nextjs-scaffolder`, `cms-adapter-generator`, `page-component-generator`, `route-validator` |
+| E | Yes | `playwright-behavioral-parity`, `sonarqube-gate`, `lighthouse-ci-gate`, `ai-remediation-agent` |
+
+Human checkpoints still apply: WP-1, WP-2, CHECKPOINT 2 (tests), CHECKPOINT 3–4 (quality).
+
+Pass orchestrator flags through to the script when invoking it:
+
+```bash
+node scripts/wp-migration/wordpress-to-strapi.mjs <site-slug> <wp-url> [--import] [--cms-only] [--skip-tests]
+```
 
 If URL is missing, stop and ask:
 
-`wordpress-to-strapi <wordpress-url> [--cms-only] [--with-frontend] [--skip-tests]`
+`wordpress-to-strapi <wordpress-url> [--cms-only] [--skip-tests]`
 
-Full migration command: `.claude/commands/wordpress-to-strapi-full.md`
+Data-only command: `.claude/commands/wp-to-strapi-dn-migration.md` (never runs B/D/E)
 
 ## Architecture
 
 ```
-COMMAND 1 (/wordpress-to-strapi) — preview profile
-  Extract (capped) → Normalize → Detect → Review
-        ↓ unknown-blocks? → AI → validate-ai
-        ↓ CHECKPOINT WP-1
-  generate-schema.mjs → strapi-bootstrapper → restart Strapi
-        ↓ import-preview-to-strapi.mjs
-        ↓ CHECKPOINT WP-2
+/wordpress-to-strapi — DEFAULT (no flags) = full stack partial
+  Phase W: wordpress-to-strapi.mjs
+    Extract (capped) → Normalize → Detect → Review
+          ↓ unknown-blocks? → AI → validate-ai
+          ↓ CHECKPOINT WP-1
+    generate-schema.mjs → strapi-bootstrapper → restart Strapi
+          ↓ import-preview-to-strapi.mjs
+          ↓ CHECKPOINT WP-2
+  Phase B: phase-b.md (Playwright tests vs legacy WP) → CHECKPOINT 2
+  Phase D: nextjs-scaffolder → cms-adapter → pages → route-validator
+  Phase E: behavioral parity → sonar → lighthouse → remediation loop
 
-COMMAND 2 (/wordpress-to-strapi-full) — full profile (separate)
-  Extract (all pages) → Normalize → import-full-to-strapi.mjs
-  (no detect/review; schemas from command 1)
+  --cms-only     → Phase W only
+  --skip-tests   → Phase W + D + E (no B)
+
+/wp-to-strapi-dn-migration — DATA ONLY (no content modeling, no B/D/E)
+  wp-to-strapi-dn-migration.mjs
+  Extract (all) → Normalize → import-full-to-strapi.mjs
 ```
 
 ## AI vs Code boundaries
@@ -74,7 +104,9 @@ COMMAND 2 (/wordpress-to-strapi-full) — full profile (separate)
 | Strapi bootstrap | 0% | `strapi-bootstrapper` |
 | Preview import | 0% | `import-preview-to-strapi.mjs` |
 | Full migration import | 0% | `import-full-to-strapi.mjs` |
-| Frontend | ~40% | `page-component-generator` (optional) |
+| Frontend | ~40% | `page-component-generator` (default; skip with `--cms-only`) |
+| Playwright tests | 0% | Phase B (default; skip with `--skip-tests` or `--cms-only`) |
+| Quality gates | 0% | Phase E (default; skip with `--cms-only`) |
 
 **AI must NOT:** upload content, assign Strapi IDs, migrate media binaries, or write production DB rows directly.
 
@@ -87,8 +119,8 @@ COMMAND 2 (/wordpress-to-strapi-full) — full profile (separate)
    - `.claude/skills/phase-c/strapi-bootstrapper/SKILL.md`
    - `.claude/skills/phase-c/content-etl-pipeline/SKILL.md`
    - `.claude/skills/phase-c/graphql-layer-validator/SKILL.md`
-   - If `--with-frontend` or default full mode: Phase D + E skills
-   - If tests enabled: `.claude/commands/phase-b.md`
+   - Phase D + E skills (required unless `--cms-only`)
+   - Phase B command (required unless `--skip-tests` or `--cms-only`)
 
 2. Verify Node.js 18+ and `scripts/wp-migration/pipeline.mjs` exists.
 
@@ -100,18 +132,16 @@ COMMAND 2 (/wordpress-to-strapi-full) — full profile (separate)
 
 ## Phase W1 — Extract (scripts, 0% AI)
 
-**Preview (command 1):**
+**E2E partial (`/wordpress-to-strapi`):**
 
 ```bash
-node scripts/wp-migration/migrate-sample.mjs <site-slug> <wordpress-url>
-# or: pipeline.mjs <site-slug> <wp-url> extract --preview
+node scripts/wp-migration/wordpress-to-strapi.mjs <site-slug> <wordpress-url>
 ```
 
-**Full (command 2 only):**
+**Data only (`/wp-to-strapi-dn-migration`):**
 
 ```bash
-node scripts/wp-migration/migrate-full.mjs <site-slug> <wordpress-url>
-# or: pipeline.mjs <site-slug> <wp-url> extract --full
+node scripts/wp-migration/wp-to-strapi-dn-migration.mjs <site-slug> <wordpress-url>
 ```
 
 Output: `output/<site>/wp-migration/{preview|full}/raw/wp-export.json` (`meta.profile`)
@@ -210,25 +240,21 @@ Use `strapi-bootstrapper` if `output/<site>/cms/` does not exist:
 
 ---
 
-## Phase W8 — Import (profile-specific, not shared sync)
+## Phase W8 — Import
 
-**Command 1 — preview import (after schema + Strapi restart):**
-
-```bash
-STRAPI_URL=http://localhost:1337 STRAPI_API_TOKEN=<token> \
-  node scripts/wp-migration/import-preview-to-strapi.mjs <site-slug>
-```
-
-Bundled: `migrate-sample.mjs <site-slug> <wp-url> --import`
-
-**Command 2 — full migration (after WP-2; separate profile):**
+**E2E partial import (after schema + Strapi restart):**
 
 ```bash
-STRAPI_URL=... STRAPI_API_TOKEN=... \
-  node scripts/wp-migration/migrate-full.mjs <site-slug> <wordpress-url> --import
+node scripts/wp-migration/wordpress-to-strapi.mjs <site-slug> <wp-url> --import
 ```
 
-Or: `import-full-to-strapi.mjs <site-slug>` after `migrate-full.mjs` extract step.
+Or: `import-preview-to-strapi.mjs <site-slug>`
+
+**Data-only full import (`/wp-to-strapi-dn-migration`):**
+
+```bash
+node scripts/wp-migration/wp-to-strapi-dn-migration.mjs <site-slug> <wp-url> --import
+```
 
 - Preview source: `wp-migration/preview/normalized/content.json`
 - Full source: `wp-migration/full/normalized/content.json`
@@ -243,7 +269,7 @@ Do **not** use AI for imports. `content-etl-pipeline` is fallback only if script
 
 Present import counts, failed rows, sample parity checks.
 
-**Wait for explicit approval before optional frontend/tests.**
+**Wait for explicit approval before Phase B / D / E** (when those phases are enabled in `orchestrator-plan.json`).
 
 ---
 
@@ -253,17 +279,23 @@ Use `graphql-layer-validator` after CMS is populated.
 
 ---
 
-## Optional Phase B — Test contract
+## Phase B — Test contract (default: ON)
 
-Unless `--skip-tests`:
+**Run unless** `--skip-tests` or `--cms-only`.
 
 Read and follow `.claude/commands/phase-b.md` using the **public WordPress front-end URL** (same host as WP URL).
 
-Requires CHECKPOINT 2 (test suite approval) before frontend/quality if continuing to Phase E.
+### ✋ CHECKPOINT 2 — Human approves Playwright test suite
+
+Required before Phase D when tests are enabled.
 
 ---
 
-## Optional Phase D — Frontend (`--with-frontend` or default when not `--cms-only`)
+## Phase D — Frontend (default: ON)
+
+**Run unless** `--cms-only`.
+
+After WP-2 and CHECKPOINT 2 (when tests ran):
 
 1. `nextjs-scaffolder`
 2. `cms-adapter-generator`
@@ -272,14 +304,18 @@ Requires CHECKPOINT 2 (test suite approval) before frontend/quality if continuin
 
 ---
 
-## Optional Phase E — Quality loop
+## Phase E — Quality loop (default: ON)
 
-When frontend exists and tests approved:
+**Run unless** `--cms-only`.
+
+When frontend exists (and tests approved if Phase B ran):
 
 - `playwright-behavioral-parity`
 - `sonarqube-gate`
 - `lighthouse-ci-gate`
 - `ai-remediation-agent` (max 5 iterations)
+
+### ✋ CHECKPOINTs 3–4
 
 Use CHECKPOINTs 3–4 from `fullstack-builder` when Phase E runs.
 
@@ -298,9 +334,9 @@ Future: UI dashboard; for now JSON + markdown with Approve / Edit / Reject workf
 
 ## MVP phases (default first run)
 
-**Phase 1 (sample):** content model + capped posts/pages/media/categories — `/wordpress-to-strapi`.
+**E2E partial:** `/wordpress-to-strapi` — content model + capped data.
 
-**Phase 2 (full data):** `/wordpress-to-strapi-full` after WP-1 + WP-2.
+**Full data only:** `/wp-to-strapi-dn-migration` after WP-1 + WP-2 (no content modeling).
 
 **Phase 3:** ACF interpretation via W4 when unknown blocks exist.
 
@@ -312,11 +348,11 @@ Future: UI dashboard; for now JSON + markdown with Approve / Edit / Reject workf
 
 ## Deliverables
 
-1. **Paths:** `output/<site>/cms/`, optional `output/<site>/frontend/`
-2. **Migration artifacts:** `wp-migration/` raw, normalized, analysis, review
-3. **Commands:** Strapi dev, optional Next dev, re-run incremental extract
-4. **URLs:** WP source, Strapi admin, GraphQL endpoint, optional frontend
-5. **Import + mapping status:** counts, pending review rows, failed imports
+1. **Paths:** `output/<site>/cms/`, `output/<site>/frontend/` (default), Playwright suite (default)
+2. **Migration artifacts:** `wp-migration/preview/`, `analysis/`, `review/`, `orchestrator-plan.json`
+3. **Commands:** Strapi dev, Next dev, Playwright test run (unless `--cms-only`)
+4. **URLs:** WP source, Strapi admin, GraphQL endpoint, frontend dev URL
+5. **Status:** import counts, test baseline, quality gate results
 
 ## Re-running imports
 

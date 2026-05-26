@@ -7,10 +7,10 @@
 console.error(`
 import-to-strapi.mjs is deprecated.
 
-Command 1 (content model + preview data):
-  node scripts/wp-migration/import-preview-to-strapi.mjs <site-slug>
+E2E partial (/wordpress-to-strapi):
+  node scripts/wp-migration/wordpress-to-strapi.mjs <site-slug> <wp-url> [--import]
 
-Command 2 (full migration — separate profile, not a sync):
-  node scripts/wp-migration/import-full-to-strapi.mjs <site-slug>
+Data only (/wp-to-strapi-dn-migration):
+  node scripts/wp-migration/wp-to-strapi-dn-migration.mjs <site-slug> <wp-url> [--import]
 `);
 process.exit(1);

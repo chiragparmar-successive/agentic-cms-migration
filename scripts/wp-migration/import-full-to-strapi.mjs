@@ -3,7 +3,7 @@
  * Import full WordPress dataset into Strapi (command 2 — standalone migration).
  * Uses wp-migration/full/ only — does not read or update preview sync state.
  *
- * Prerequisite: preview setup complete (schemas + WP-1/WP-2). Run migrate-full.mjs first
+ * Prerequisite: /wordpress-to-strapi complete. Run wp-to-strapi-dn-migration.mjs first
  * to extract/normalize full volume into wp-migration/full/.
  *
  * Usage:
@@ -29,7 +29,7 @@ const paths = profilePaths(siteSlug, 'full');
 try {
   await fs.access(paths.normalizedFile);
 } catch {
-  console.error(`Missing ${paths.normalizedFile}. Run migrate-full.mjs first.`);
+  console.error(`Missing ${paths.normalizedFile}. Run wp-to-strapi-dn-migration.mjs first.`);
   process.exit(1);
 }
 

@@ -4,8 +4,8 @@ import { wpMigrationDir } from './utils.mjs';
 /**
  * Two isolated migration profiles — no shared sync state between them.
  *
- * preview: content model + small dataset for human review (command 1)
- * full:    complete WordPress → Strapi data migration (command 2)
+ * preview: /wordpress-to-strapi E2E partial (content model + capped data)
+ * full:    /wp-to-strapi-dn-migration data-only (no content modeling)
  */
 export const PROFILES = {
   preview: {

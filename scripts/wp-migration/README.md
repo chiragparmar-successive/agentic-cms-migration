@@ -1,102 +1,69 @@
 # WordPress → Strapi Migration Engine
 
-Two **separate commands** with **isolated data directories** — full migration is not a sync of preview.
+## Commands
 
-| | Command 1 | Command 2 |
-|---|-----------|-----------|
-| **Purpose** | Content model + preview rows in Strapi | Migrate entire WordPress site |
-| **Cursor** | `/wordpress-to-strapi` | `/wordpress-to-strapi-migrate` |
-| **Script** | `migrate-sample.mjs` | `migrate-full.mjs` |
-| **WP data** | `wp-migration/preview/` | `wp-migration/full/` |
-| **Strapi state** | `preview/sync/id-map.json` | `full/sync/id-map.json` |
-| **Schemas** | Generated from preview analysis | Reuses preview schemas |
-
-Principle: **AI suggests. Code executes.**
+| Cursor command | Script | What runs |
+|----------------|--------|-----------|
+| `/wordpress-to-strapi` | `wordpress-to-strapi.mjs` | **E2E partial** — model, schemas, import capped data |
+| `/wp-to-strapi-dn-migration` | `wp-to-strapi-dn-migration.mjs` | **Data only** — full WP import, no modeling |
 
 ---
 
-## Command 1 — Preview (content model + sample data)
+## 1. `/wordpress-to-strapi` — E2E partial (default: full stack)
+
+**No flags** = CMS + Playwright tests + Next.js frontend + quality gates.
+
+| Flag | Effect |
+|------|--------|
+| *(none)* | W + B + D + E |
+| `--cms-only` | Phase W only |
+| `--skip-tests` | W + D + E |
 
 ```bash
 SITE=your-site-slug
 WP_URL=https://yoursite.com/
 
-node scripts/wp-migration/migrate-sample.mjs "$SITE" "$WP_URL"
+node scripts/wp-migration/wordpress-to-strapi.mjs "$SITE" "$WP_URL"
 
 cd output/$SITE/cms && npm run develop
 
 export STRAPI_URL=http://localhost:1337
 export STRAPI_API_TOKEN=your-token
-node scripts/wp-migration/migrate-sample.mjs "$SITE" "$WP_URL" --import
+node scripts/wp-migration/wordpress-to-strapi.mjs "$SITE" "$WP_URL" --import
 ```
 
-Preview caps: 5 posts, 3 pages, 10 categories, 5 tags, 5 media, 2 users (`lib/sample-limits.mjs`).
+Includes: extract (capped) → normalize → detect → review → `generate-schema.mjs` → partial import.
 
-**Artifacts (preview only):**
-
-- `wp-migration/preview/raw/wp-export.json`
-- `wp-migration/preview/normalized/content.json`
-- `wp-migration/analysis/` — structure from preview (shared, used for schemas)
-- `wp-migration/review/REVIEW-MAPPING.md` — WP-1 checkpoint
+Data: `wp-migration/preview/`, analysis: `wp-migration/analysis/`.
 
 ---
 
-## Command 2 — Full migration (standalone)
+## 2. `/wp-to-strapi-dn-migration` — Data only
 
-Run only after WP-1 / WP-2 approve the content model and preview data.
+After WP-1 / WP-2 approval:
 
 ```bash
-node scripts/wp-migration/migrate-full.mjs "$SITE" "$WP_URL" --import
+node scripts/wp-migration/wp-to-strapi-dn-migration.mjs "$SITE" "$WP_URL" --import
 ```
 
-Or in two steps:
+Includes: full extract → normalize → import only.  
+**Skips:** detect, review, `generate-schema.mjs`.
 
-```bash
-node scripts/wp-migration/migrate-full.mjs "$SITE" "$WP_URL"
-STRAPI_URL=... STRAPI_API_TOKEN=... \
-  node scripts/wp-migration/import-full-to-strapi.mjs "$SITE"
-```
-
-**Artifacts (full only):**
-
-- `wp-migration/full/raw/wp-export.json`
-- `wp-migration/full/normalized/content.json`
-- `wp-migration/full/sync/id-map.json`
-
-Full import matches Strapi rows by `wpId` within the **full** profile only. It does not read preview `id-map.json`.
+Data: `wp-migration/full/`.
 
 ---
 
-## Low-level scripts
+## Low-level imports
 
-| Script | Profile |
-|--------|---------|
-| `pipeline.mjs … --preview` | preview (default): extract, normalize, detect, review |
-| `pipeline.mjs … --full` | full: extract, normalize only |
-| `generate-schema.mjs` | from `analysis/` (preview) |
-| `import-preview-to-strapi.mjs` | preview import |
-| `import-full-to-strapi.mjs` | full migration import |
+| Script | When |
+|--------|------|
+| `import-preview-to-strapi.mjs` | Partial rows (command 1) |
+| `import-full-to-strapi.mjs` | Full dataset (command 2) |
+| `pipeline.mjs … --preview` | Preview profile steps |
+| `pipeline.mjs … --full` | Full profile extract/normalize only |
 
-`import-to-strapi.mjs` is deprecated.
-
----
-
-## Environment
-
-Copy `scripts/wp-migration/.env.example`. Requires Node.js 18+.
+Legacy aliases: `migrate-sample.mjs`, `migrate-full.mjs`.
 
 ---
-
-## Cursor
-
-```
-/wordpress-to-strapi https://yoursite.com/ --cms-only
-```
-
-After checkpoints:
-
-```
-/wordpress-to-strapi-migrate https://yoursite.com/
-```
 
 Skill: `.claude/skills/orchestrators/wordpress-to-strapi/SKILL.md`

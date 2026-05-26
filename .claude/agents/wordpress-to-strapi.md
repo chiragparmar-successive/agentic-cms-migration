@@ -1,6 +1,6 @@
 ---
 name: wordpress-to-strapi
-description: Hybrid WordPress → Strapi migration. Command 1 = content model + preview data. Command 2 = standalone full migration (not sync).
+description: WordPress → Strapi. Default = full partial stack (CMS + tests + frontend + quality). /wp-to-strapi-dn-migration = data-only full import.
 ---
 
 # WordPress → Strapi Agent
@@ -11,37 +11,19 @@ description: Hybrid WordPress → Strapi migration. Command 1 = content model + 
 
 ## Commands
 
-| Slash command | Role |
-|---------------|------|
-| `/wordpress-to-strapi` | **Command 1** — preview profile: schemas + sample rows |
-| `/wordpress-to-strapi-full` | **Command 2** — full profile: complete migration (isolated) |
+| Slash command | Default scope |
+|---------------|----------------|
+| `/wordpress-to-strapi` | **No flags** → CMS partial + Phase B + D + E |
+| `/wordpress-to-strapi --cms-only` | CMS partial only |
+| `/wordpress-to-strapi --skip-tests` | CMS + frontend + quality (no Playwright baseline) |
+| `/wp-to-strapi-dn-migration` | Full data import only (no modeling, no B/D/E) |
 
-- `.claude/commands/wordpress-to-strapi.md`
-- `.claude/commands/wordpress-to-strapi-full.md`
+## Scripts
 
-## When to use
-
-- Source is WordPress (WP REST API available)
-- Target CMS is Strapi 5
-- User wants script-first, repeatable migration — not full-AI schema guessing
-
-## When NOT to use
-
-- Non-WordPress legacy sites → use `/fullstack-builder`
-- WP REST API disabled with no XML fallback prepared
-
-## Arguments
-
-- `<wordpress-url>` (required)
-- `--cms-only` | `--with-frontend` | `--skip-tests` (optional, command 1)
+- `scripts/wp-migration/wordpress-to-strapi.mjs`
+- `scripts/wp-migration/wp-to-strapi-dn-migration.mjs`
+- `scripts/wp-migration/lib/orchestrator-flags.mjs`
 
 ## Checkpoints
 
-| ID | Gate |
-|----|------|
-| WP-1 | Human approves content model + `REVIEW-MAPPING.md` |
-| WP-2 | Human approves **preview** content in Strapi |
-| 2 | Test suite (if Phase B enabled) |
-| 3–4 | Quality gates (if Phase E enabled) |
-
-Run command 2 only after WP-1 and WP-2.
+WP-1, WP-2, CHECKPOINT 2 (tests), CHECKPOINTs 3–4 (quality) — per skill.

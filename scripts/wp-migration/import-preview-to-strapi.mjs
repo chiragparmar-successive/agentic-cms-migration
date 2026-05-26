@@ -26,7 +26,7 @@ const paths = profilePaths(siteSlug, 'preview');
 try {
   await fs.access(paths.normalizedFile);
 } catch {
-  console.error(`Missing ${paths.normalizedFile}. Run migrate-sample.mjs first.`);
+  console.error(`Missing ${paths.normalizedFile}. Run wordpress-to-strapi.mjs first.`);
   process.exit(1);
 }
 

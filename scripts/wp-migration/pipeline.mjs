@@ -2,8 +2,8 @@
 /**
  * WordPress data pipeline for one migration profile (preview or full).
  *
- * Preview (default): content modeling — extract + normalize + detect + review
- * Full: data pull only — extract + normalize (schemas come from preview)
+ * Preview (default): /wordpress-to-strapi — extract + normalize + detect + review
+ * Full: /wp-to-strapi-dn-migration — extract + normalize only (no content modeling)
  *
  * Usage:
  *   node scripts/wp-migration/pipeline.mjs <site-slug> <wordpress-url> [step] [--preview|--full]
