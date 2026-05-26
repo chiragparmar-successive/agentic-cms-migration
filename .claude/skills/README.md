@@ -10,6 +10,7 @@ Skills are grouped by **phase** first, then by **skill name**. Entry point for e
   phase-a/                          # Reverse Engineering
     site-crawler/SKILL.md
     wp-source-adapter/SKILL.md
+    wp-ai-interpreter/SKILL.md
     content-model-inferencer/SKILL.md
   phase-b/                          # Test-First Contract
     playwright-suite-generator/SKILL.md
@@ -36,6 +37,7 @@ Skills are grouped by **phase** first, then by **skill name**. Entry point for e
     ai-remediation-agent/SKILL.md
   orchestrators/
     fullstack-builder/SKILL.md
+    wordpress-to-strapi/SKILL.md
   frontend/
     vercel/                         # read-only vendored packs (see skills-lock.json)
       cra-to-next-migration/

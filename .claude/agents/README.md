@@ -10,7 +10,9 @@ All agent files live **flat** in this directory — `.claude/agents/<name>.md`. 
 |-------|-------------|
 | `site-crawler.md` | Crawls DOM, routes, media, and sitemaps from legacy site |
 | `wp-source-adapter.md` | Optional WordPress REST API extraction (WP-JSON, ACF, taxonomies) |
+| *(skill)* `wp-ai-interpreter` | AI interpretation for unknown WP blocks — `.claude/skills/phase-a/wp-ai-interpreter/SKILL.md` |
 | `content-model-inferencer.md` | AI-powered content model inference via Claude API |
+| `wordpress-to-strapi.md` | Hybrid WP → Strapi orchestrator (scripts + selective AI) |
 
 ### Phase B — Test-First Contract
 
@@ -82,7 +84,8 @@ All agent files live **flat** in this directory — `.claude/agents/<name>.md`. 
 | E — SonarQube | `.claude/skills/phase-e/sonarqube-gate/SKILL.md` |
 | E — Lighthouse | `.claude/skills/phase-e/lighthouse-ci-gate/SKILL.md` |
 | E — Remediation | `.claude/skills/phase-e/ai-remediation-agent/SKILL.md` |
-| Orchestrator | `.claude/skills/orchestrators/fullstack-builder/SKILL.md` |
+| Orchestrator — full stack | `.claude/skills/orchestrators/fullstack-builder/SKILL.md` |
+| Orchestrator — WordPress → Strapi | `.claude/skills/orchestrators/wordpress-to-strapi/SKILL.md` |
 
 ## Mandatory Output Location
 
@@ -93,3 +96,4 @@ All artifacts must be created under:
   - `cms/` — Strapi project
   - `frontend/` — Next.js project
   - `reports/` — Quality gate reports (SonarQube, Lighthouse, remediation logs)
+  - `wp-migration/` — Deterministic WP extract/normalize/analysis (wordpress-to-strapi command)

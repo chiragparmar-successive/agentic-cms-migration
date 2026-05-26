@@ -32,6 +32,7 @@ Crawl, extract, and infer the content model from the legacy site.
 |-------|-------------|
 | `site-crawler` | DOM + routes + media + sitemaps extraction |
 | `wp-source-adapter` | Optional WordPress REST API adapter (WP-JSON, ACF, taxonomies) |
+| `wp-ai-interpreter` | AI layer for unknown ACF/Elementor only (used by `wordpress-to-strapi`) |
 | `content-model-inferencer` | AI-powered content model inference via Claude API |
 
 **CHECKPOINT 1** — Human approves Content Model Spec before proceeding.
@@ -101,6 +102,7 @@ Automated quality gates with AI-powered remediation.
   README.md
   commands/
     fullstack-builder.md
+    wordpress-to-strapi.md
   agents/
     README.md
     site-crawler.md
@@ -154,6 +156,7 @@ Automated quality gates with AI-powered remediation.
       ai-remediation-agent/SKILL.md
     orchestrators/
       fullstack-builder/SKILL.md
+      wordpress-to-strapi/SKILL.md
     frontend/
       vercel/                         # vendored packs (tracked in skills-lock.json)
         cra-to-next-migration/
@@ -162,6 +165,14 @@ Automated quality gates with AI-powered remediation.
         vercel-composition-patterns/
         vercel-react-best-practices/
 ```
+
+## Slash commands
+
+| Command | Use when |
+|---------|----------|
+| `/fullstack-builder <url>` | Generic legacy site → Next.js + Strapi (Phases A–E) |
+| `/wordpress-to-strapi <wp-url>` | WordPress-specific hybrid migration (scripts + selective AI) |
+| `/phase-b <url>` | Test-first contract only |
 
 ## Conventions
 
