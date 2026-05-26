@@ -7,14 +7,14 @@ argument-hint: "<wordpress-url> [--cms-only] [--skip-tests]"
 
 **Default (no flags):** runs the **complete partial stack** — not CMS-only.
 
-| Phase | Default | Opt out |
-|-------|---------|---------|
-| CMS partial E2E (model + capped import) | Yes | — |
-| Phase B — Playwright tests (legacy WP) | Yes | `--skip-tests` |
-| Phase D — Next.js frontend | Yes | `--cms-only` |
-| Phase E — quality gates | Yes | `--cms-only` |
+| Phase                                   | Default | Opt out        |
+| --------------------------------------- | ------- | -------------- |
+| CMS partial E2E (model + capped import) | Yes     | —              |
+| Phase B — Playwright tests (legacy WP)  | Yes     | `--skip-tests` |
+| Phase D — Next.js frontend              | Yes     | `--cms-only`   |
+| Phase E — quality gates                 | Yes     | `--cms-only`   |
 
-**Partial data only** — full WordPress volume is `/wp-to-strapi-dn-migration` (data-only, no B/D/E).
+**Partial data only** — full WordPress volume is `/wp-to-strapi-db-migration` (data-only, no B/D/E).
 
 ### Skill
 

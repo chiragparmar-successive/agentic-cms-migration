@@ -13,26 +13,26 @@ Does **not** replace `/fullstack-builder` — use this command when the source i
 
 ## Two commands
 
-| Command | What it does |
-|---------|----------------|
-| `/wordpress-to-strapi` | **E2E partial** — content model, schemas, Strapi bootstrap, import **capped** WP data |
-| `/wp-to-strapi-dn-migration` | **Data only** — full WP extract + import; **no** detect, review, or schema generation |
+| Command                      | What it does                                                                          |
+| ---------------------------- | ------------------------------------------------------------------------------------- |
+| `/wordpress-to-strapi`       | **E2E partial** — content model, schemas, Strapi bootstrap, import **capped** WP data |
+| `/wp-to-strapi-db-migration` | **Data only** — full WP extract + import; **no** detect, review, or schema generation |
 
-| Path | `/wordpress-to-strapi` | `/wp-to-strapi-dn-migration` |
-|------|------------------------|------------------------------|
-| WP export | `wp-migration/preview/raw/` | `wp-migration/full/raw/` |
-| Normalized | `wp-migration/preview/normalized/` | `wp-migration/full/normalized/` |
-| Import state | `preview/sync/id-map.json` | `full/sync/id-map.json` |
-| Content model | `wp-migration/analysis/` + schemas | **Skipped** — reuses command 1 |
+| Path          | `/wordpress-to-strapi`             | `/wp-to-strapi-db-migration`    |
+| ------------- | ---------------------------------- | ------------------------------- |
+| WP export     | `wp-migration/preview/raw/`        | `wp-migration/full/raw/`        |
+| Normalized    | `wp-migration/preview/normalized/` | `wp-migration/full/normalized/` |
+| Import state  | `preview/sync/id-map.json`         | `full/sync/id-map.json`         |
+| Content model | `wp-migration/analysis/` + schemas | **Skipped** — reuses command 1  |
 
 Script entrypoints:
 
 - `scripts/wp-migration/wordpress-to-strapi.mjs`
-- `scripts/wp-migration/wp-to-strapi-dn-migration.mjs`
+- `scripts/wp-migration/wp-to-strapi-db-migration.mjs`
 
 Partial caps: 5 posts, 3 pages, 10 categories, 5 tags, 5 media, 2 users (`lib/sample-limits.mjs`).
 
-**Never run `/wp-to-strapi-dn-migration` before `/wordpress-to-strapi` completes** (schemas + WP-1 / WP-2).
+**Never run `/wp-to-strapi-db-migration` before `/wordpress-to-strapi` completes** (schemas + WP-1 / WP-2).
 
 ## Arguments
 
@@ -47,12 +47,12 @@ Parse flags with the same rules as `scripts/wp-migration/lib/orchestrator-flags.
 
 When the user passes **only the URL**, run **everything**:
 
-| Phase | Included | Skills / commands |
-|-------|----------|-------------------|
-| W | Yes | `wordpress-to-strapi.mjs`, bootstrap, partial import |
-| B | Yes | `.claude/commands/phase-b.md`, Playwright suite on **legacy WP URL** |
-| D | Yes | `nextjs-scaffolder`, `cms-adapter-generator`, `page-component-generator`, `route-validator` |
-| E | Yes | `playwright-behavioral-parity`, `sonarqube-gate`, `lighthouse-ci-gate`, `ai-remediation-agent` |
+| Phase | Included | Skills / commands                                                                              |
+| ----- | -------- | ---------------------------------------------------------------------------------------------- |
+| W     | Yes      | `wordpress-to-strapi.mjs`, bootstrap, partial import                                           |
+| B     | Yes      | `.claude/commands/phase-b.md`, Playwright suite on **legacy WP URL**                           |
+| D     | Yes      | `nextjs-scaffolder`, `cms-adapter-generator`, `page-component-generator`, `route-validator`    |
+| E     | Yes      | `playwright-behavioral-parity`, `sonarqube-gate`, `lighthouse-ci-gate`, `ai-remediation-agent` |
 
 Human checkpoints still apply: WP-1, WP-2, CHECKPOINT 2 (tests), CHECKPOINT 3–4 (quality).
 
@@ -66,7 +66,7 @@ If URL is missing, stop and ask:
 
 `wordpress-to-strapi <wordpress-url> [--cms-only] [--skip-tests]`
 
-Data-only command: `.claude/commands/wp-to-strapi-dn-migration.md` (never runs B/D/E)
+Data-only command: `.claude/commands/wp-to-strapi-db-migration.md` (never runs B/D/E)
 
 ## Architecture
 
@@ -86,27 +86,27 @@ Data-only command: `.claude/commands/wp-to-strapi-dn-migration.md` (never runs B
   --cms-only     → Phase W only
   --skip-tests   → Phase W + D + E (no B)
 
-/wp-to-strapi-dn-migration — DATA ONLY (no content modeling, no B/D/E)
-  wp-to-strapi-dn-migration.mjs
+/wp-to-strapi-db-migration — DATA ONLY (no content modeling, no B/D/E)
+  wp-to-strapi-db-migration.mjs
   Extract (all) → Normalize → import-full-to-strapi.mjs
 ```
 
 ## AI vs Code boundaries
 
-| Step | AI % | Owner |
-|------|------|--------|
-| WP extraction | 0% | `scripts/wp-migration/pipeline.mjs` |
-| Normalization | 0% | scripts |
-| Structure detection | 0% | scripts |
-| Unknown ACF/Elementor | ~70% | `wp-ai-interpreter` |
-| AI validation | 0% | `validate-ai.mjs` |
-| Schema files | 0% | `strapi-schema-generator` |
-| Strapi bootstrap | 0% | `strapi-bootstrapper` |
-| Preview import | 0% | `import-preview-to-strapi.mjs` |
-| Full migration import | 0% | `import-full-to-strapi.mjs` |
-| Frontend | ~40% | `page-component-generator` (default; skip with `--cms-only`) |
-| Playwright tests | 0% | Phase B (default; skip with `--skip-tests` or `--cms-only`) |
-| Quality gates | 0% | Phase E (default; skip with `--cms-only`) |
+| Step                  | AI % | Owner                                                        |
+| --------------------- | ---- | ------------------------------------------------------------ |
+| WP extraction         | 0%   | `scripts/wp-migration/pipeline.mjs`                          |
+| Normalization         | 0%   | scripts                                                      |
+| Structure detection   | 0%   | scripts                                                      |
+| Unknown ACF/Elementor | ~70% | `wp-ai-interpreter`                                          |
+| AI validation         | 0%   | `validate-ai.mjs`                                            |
+| Schema files          | 0%   | `strapi-schema-generator`                                    |
+| Strapi bootstrap      | 0%   | `strapi-bootstrapper`                                        |
+| Preview import        | 0%   | `import-preview-to-strapi.mjs`                               |
+| Full migration import | 0%   | `import-full-to-strapi.mjs`                                  |
+| Frontend              | ~40% | `page-component-generator` (default; skip with `--cms-only`) |
+| Playwright tests      | 0%   | Phase B (default; skip with `--skip-tests` or `--cms-only`)  |
+| Quality gates         | 0%   | Phase E (default; skip with `--cms-only`)                    |
 
 **AI must NOT:** upload content, assign Strapi IDs, migrate media binaries, or write production DB rows directly.
 
@@ -138,10 +138,10 @@ Data-only command: `.claude/commands/wp-to-strapi-dn-migration.md` (never runs B
 node scripts/wp-migration/wordpress-to-strapi.mjs <site-slug> <wordpress-url>
 ```
 
-**Data only (`/wp-to-strapi-dn-migration`):**
+**Data only (`/wp-to-strapi-db-migration`):**
 
 ```bash
-node scripts/wp-migration/wp-to-strapi-dn-migration.mjs <site-slug> <wordpress-url>
+node scripts/wp-migration/wp-to-strapi-db-migration.mjs <site-slug> <wordpress-url>
 ```
 
 Output: `output/<site>/wp-migration/{preview|full}/raw/wp-export.json` (`meta.profile`)
@@ -250,10 +250,10 @@ node scripts/wp-migration/wordpress-to-strapi.mjs <site-slug> <wp-url> --import
 
 Or: `import-preview-to-strapi.mjs <site-slug>`
 
-**Data-only full import (`/wp-to-strapi-dn-migration`):**
+**Data-only full import (`/wp-to-strapi-db-migration`):**
 
 ```bash
-node scripts/wp-migration/wp-to-strapi-dn-migration.mjs <site-slug> <wp-url> --import
+node scripts/wp-migration/wp-to-strapi-db-migration.mjs <site-slug> <wp-url> --import
 ```
 
 - Preview source: `wp-migration/preview/normalized/content.json`
@@ -336,7 +336,7 @@ Future: UI dashboard; for now JSON + markdown with Approve / Edit / Reject workf
 
 **E2E partial:** `/wordpress-to-strapi` — content model + capped data.
 
-**Full data only:** `/wp-to-strapi-dn-migration` after WP-1 + WP-2 (no content modeling).
+**Full data only:** `/wp-to-strapi-db-migration` after WP-1 + WP-2 (no content modeling).
 
 **Phase 3:** ACF interpretation via W4 when unknown blocks exist.
 
@@ -372,12 +372,12 @@ Do not mix profiles. Regenerate schemas only when WP structure changes (preview 
 
 ## Failure handling
 
-| Failure | Action |
-|---------|--------|
-| WP API 403 | Report; offer XML export path (manual) |
-| validate-ai fails | Fix interpretations; max 2 retries → human |
-| Import row fails | Log in IMPORT-REPORT; do not skip checkpoint |
-| AI hallucinates type names | Rejected by validate-ai.mjs |
+| Failure                    | Action                                       |
+| -------------------------- | -------------------------------------------- |
+| WP API 403                 | Report; offer XML export path (manual)       |
+| validate-ai fails          | Fix interpretations; max 2 retries → human   |
+| Import row fails           | Log in IMPORT-REPORT; do not skip checkpoint |
+| AI hallucinates type names | Rejected by validate-ai.mjs                  |
 
 ## Relation to `/fullstack-builder`
 

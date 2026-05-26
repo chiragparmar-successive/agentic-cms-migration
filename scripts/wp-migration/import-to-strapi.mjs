@@ -10,7 +10,7 @@ import-to-strapi.mjs is deprecated.
 E2E partial (/wordpress-to-strapi):
   node scripts/wp-migration/wordpress-to-strapi.mjs <site-slug> <wp-url> [--import]
 
-Data only (/wp-to-strapi-dn-migration):
-  node scripts/wp-migration/wp-to-strapi-dn-migration.mjs <site-slug> <wp-url> [--import]
+Data only (/wp-to-strapi-db-migration):
+  node scripts/wp-migration/wp-to-strapi-db-migration.mjs <site-slug> <wp-url> [--import]
 `);
 process.exit(1);

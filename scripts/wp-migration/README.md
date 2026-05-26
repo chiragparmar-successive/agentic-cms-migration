@@ -2,10 +2,10 @@
 
 ## Commands
 
-| Cursor command | Script | What runs |
-|----------------|--------|-----------|
-| `/wordpress-to-strapi` | `wordpress-to-strapi.mjs` | **E2E partial** — model, schemas, import capped data |
-| `/wp-to-strapi-dn-migration` | `wp-to-strapi-dn-migration.mjs` | **Data only** — full WP import, no modeling |
+| Cursor command               | Script                          | What runs                                            |
+| ---------------------------- | ------------------------------- | ---------------------------------------------------- |
+| `/wordpress-to-strapi`       | `wordpress-to-strapi.mjs`       | **E2E partial** — model, schemas, import capped data |
+| `/wp-to-strapi-db-migration` | `wp-to-strapi-db-migration.mjs` | **Data only** — full WP import, no modeling          |
 
 ---
 
@@ -13,11 +13,11 @@
 
 **No flags** = CMS + Playwright tests + Next.js frontend + quality gates.
 
-| Flag | Effect |
-|------|--------|
-| *(none)* | W + B + D + E |
-| `--cms-only` | Phase W only |
-| `--skip-tests` | W + D + E |
+| Flag           | Effect        |
+| -------------- | ------------- |
+| _(none)_       | W + B + D + E |
+| `--cms-only`   | Phase W only  |
+| `--skip-tests` | W + D + E     |
 
 ```bash
 SITE=your-site-slug
@@ -38,12 +38,12 @@ Data: `wp-migration/preview/`, analysis: `wp-migration/analysis/`.
 
 ---
 
-## 2. `/wp-to-strapi-dn-migration` — Data only
+## 2. `/wp-to-strapi-db-migration` — Data only
 
 After WP-1 / WP-2 approval:
 
 ```bash
-node scripts/wp-migration/wp-to-strapi-dn-migration.mjs "$SITE" "$WP_URL" --import
+node scripts/wp-migration/wp-to-strapi-db-migration.mjs "$SITE" "$WP_URL" --import
 ```
 
 Includes: full extract → normalize → import only.  
@@ -55,12 +55,12 @@ Data: `wp-migration/full/`.
 
 ## Low-level imports
 
-| Script | When |
-|--------|------|
-| `import-preview-to-strapi.mjs` | Partial rows (command 1) |
-| `import-full-to-strapi.mjs` | Full dataset (command 2) |
-| `pipeline.mjs … --preview` | Preview profile steps |
-| `pipeline.mjs … --full` | Full profile extract/normalize only |
+| Script                         | When                                |
+| ------------------------------ | ----------------------------------- |
+| `import-preview-to-strapi.mjs` | Partial rows (command 1)            |
+| `import-full-to-strapi.mjs`    | Full dataset (command 2)            |
+| `pipeline.mjs … --preview`     | Preview profile steps               |
+| `pipeline.mjs … --full`        | Full profile extract/normalize only |
 
 Legacy aliases: `migrate-sample.mjs`, `migrate-full.mjs`.
 
