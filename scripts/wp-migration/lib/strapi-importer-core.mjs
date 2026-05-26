@@ -170,7 +170,7 @@ export async function runStrapiImport(siteSlug, options) {
   log.results.media = { uploaded: 0, skipped: 0, errors: 0 };
   for (const media of normalized.media || []) {
     try {
-      const r = await uploadMedia(strapiUrl, strapiToken, media, idMap, { skipCached });
+      const r = await uploadMedia(strapiUrl, strapiToken, media, idMap, { skipCached: skipCachedMedia });
       if (r.action === 'uploaded') log.results.media.uploaded += 1;
       else log.results.media.skipped += 1;
     } catch (err) {
@@ -182,6 +182,7 @@ export async function runStrapiImport(siteSlug, options) {
   const contentStats = { article: { created: 0, updated: 0 }, page: { created: 0, updated: 0 } };
 
   for (const item of normalized.items || []) {
+    if (item.kind !== 'article' && item.kind !== 'page') continue;
     const plural = item.kind === 'page' ? 'pages' : 'articles';
     const mapKey = item.kind === 'page' ? 'page' : 'article';
 
