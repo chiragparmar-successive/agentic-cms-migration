@@ -1,11 +1,13 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
-import { readJson, writeJson, wpMigrationDir, ensureDir } from './utils.mjs';
+import { readJson, writeJson, ensureDir } from './utils.mjs';
+import { profilePaths } from './migration-profile.mjs';
 
-export async function generateReviewMapping(siteSlug) {
-  const outDir = wpMigrationDir(siteSlug);
-  const analysisPath = path.join(outDir, 'analysis/structure-analysis.json');
-  const normalizedPath = path.join(outDir, 'normalized/content.json');
+export async function generateReviewMapping(siteSlug, options = {}) {
+  const profileId = options.profile ?? 'preview';
+  const paths = profilePaths(siteSlug, profileId);
+  const analysisPath = paths.structureAnalysisFile;
+  const normalizedPath = paths.normalizedFile;
 
   let analysis = { collectionTypes: [], components: [] };
   let normalized = { items: [] };
@@ -23,7 +25,7 @@ export async function generateReviewMapping(siteSlug) {
 
   let aiValidated = null;
   try {
-    aiValidated = await readJson(path.join(outDir, 'validated/ai-interpretations.json'));
+    aiValidated = await readJson(path.join(paths.root, 'validated/ai-interpretations.json'));
   } catch {
     /* optional */
   }
@@ -66,13 +68,12 @@ export async function generateReviewMapping(siteSlug) {
     rows,
   };
 
-  const reviewDir = path.join(outDir, 'review');
-  await ensureDir(reviewDir);
-  const mappingPath = path.join(reviewDir, 'mapping-review.json');
+  await ensureDir(paths.reviewDir);
+  const mappingPath = path.join(paths.reviewDir, 'mapping-review.json');
   await writeJson(mappingPath, mapping);
 
   const md = buildMarkdown(mapping, siteSlug);
-  const markdownPath = path.join(reviewDir, 'REVIEW-MAPPING.md');
+  const markdownPath = path.join(paths.reviewDir, 'REVIEW-MAPPING.md');
   await fs.writeFile(markdownPath, md, 'utf8');
 
   return { mappingPath, markdownPath };

@@ -1,5 +1,6 @@
-import path from 'node:path';
-import { readJson, writeJson, wpMigrationDir } from './utils.mjs';
+import fs from 'node:fs/promises';
+import { readJson, writeJson } from './utils.mjs';
+import { profilePaths } from './migration-profile.mjs';
 
 const KNOWN_ACF_TYPES = new Set([
   'text',
@@ -45,9 +46,10 @@ const STRAPI_FIELD_TYPES = new Set([
 const URL_RE = /^https?:\/\//i;
 const IMAGE_EXT_RE = /\.(jpe?g|png|gif|webp|avif|svg)(\?|$)/i;
 
-export async function detectStructure(siteSlug) {
-  const outDir = wpMigrationDir(siteSlug);
-  const normalized = await readJson(path.join(outDir, 'normalized/content.json'));
+export async function detectStructure(siteSlug, options = {}) {
+  const profileId = options.profile ?? 'preview';
+  const paths = profilePaths(siteSlug, profileId);
+  const normalized = await readJson(paths.normalizedFile);
 
   const fieldStats = new Map();
   const unknownBlocks = [];
@@ -94,12 +96,13 @@ export async function detectStructure(siteSlug) {
     blocks: unknownBlocks,
   };
 
-  await writeJson(path.join(outDir, 'analysis/structure-analysis.json'), analysis);
-  await writeJson(path.join(outDir, 'analysis/unknown-blocks.json'), unknown);
+  await fs.mkdir(paths.analysisDir, { recursive: true });
+  await writeJson(paths.structureAnalysisFile, analysis);
+  await writeJson(paths.unknownBlocksFile, unknown);
 
   return {
-    analysisPath: path.join(outDir, 'analysis/structure-analysis.json'),
-    unknownPath: path.join(outDir, 'analysis/unknown-blocks.json'),
+    analysisPath: paths.structureAnalysisFile,
+    unknownPath: paths.unknownBlocksFile,
     unknownCount: unknownBlocks.length,
   };
 }

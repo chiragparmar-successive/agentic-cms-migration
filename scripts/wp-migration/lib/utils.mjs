@@ -42,13 +42,17 @@ export async function fetchJson(url, options = {}) {
   return res.json();
 }
 
-/** Paginate WP REST collection endpoints. */
-export async function fetchAllPages(baseUrl, resource, perPage = 100) {
+/** Paginate WP REST collection endpoints. Optional maxItems stops early (sample mode). */
+export async function fetchAllPages(baseUrl, resource, options = {}) {
+  const perPage = options.perPage ?? 100;
+  const maxItems = options.maxItems ?? null;
   const items = [];
   let page = 1;
   let totalPages = 1;
 
   while (page <= totalPages) {
+    if (maxItems != null && items.length >= maxItems) break;
+
     const url = `${baseUrl}/wp-json/wp/v2/${resource}?per_page=${perPage}&page=${page}&_embed`;
     const res = await fetch(url, { headers: { Accept: 'application/json' } });
     if (res.status === 400 && page > 1) break;
@@ -58,7 +62,13 @@ export async function fetchAllPages(baseUrl, resource, perPage = 100) {
     totalPages = Number(res.headers.get('x-wp-totalpages') || '1');
     const batch = await res.json();
     if (!Array.isArray(batch) || batch.length === 0) break;
-    items.push(...batch);
+
+    if (maxItems != null) {
+      const remaining = maxItems - items.length;
+      items.push(...batch.slice(0, remaining));
+    } else {
+      items.push(...batch);
+    }
     page += 1;
   }
 

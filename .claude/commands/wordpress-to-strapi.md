@@ -1,51 +1,33 @@
 ---
-description: Hybrid WordPress → Strapi end-to-end migration — deterministic extract/normalize/import (70%) plus AI only for unknown ACF/Elementor blocks (30%). Optional Next.js frontend and Playwright quality gates.
+description: WordPress → Strapi command 1 — content model + preview data in Strapi (not full migration). Use /wordpress-to-strapi-full for complete site import after checkpoints.
 argument-hint: "<wordpress-url> [--cms-only] [--with-frontend] [--skip-tests]"
 ---
 
 ## `/wordpress-to-strapi`
 
-**Cursor slash command:** `/wordpress-to-strapi https://yoursite.com`  
-Optional flags: `--cms-only`, `--with-frontend`, `--skip-tests`
+**Command 1 — Preview setup:** content model, Strapi schemas, and a **small dataset** so you can review types and entries in Strapi.
 
-Runs the **hybrid migration orchestrator** — separate from `/fullstack-builder` (generic legacy URL pipeline).
+This is **not** the full site migration. Command 2 (`/wordpress-to-strapi-full`) is a separate migration with its own data paths and import — it does not sync from preview state.
+
+Optional flags: `--cms-only`, `--with-frontend`, `--skip-tests`
 
 ### Skill
 
 - `.claude/skills/orchestrators/wordpress-to-strapi/SKILL.md`
 
-### Core principle
-
-**AI suggests. Code executes.**
-
-Scripts handle extraction, normalization, schema generation, and content import. AI runs only for structures flagged in `unknown-blocks.json`.
-
-### Standalone scripts (recommended workflow)
-
-**Step 1 — Schema (once):**
+### Script
 
 ```bash
-node scripts/wp-migration/generate-schema.mjs <site-slug>
+node scripts/wp-migration/migrate-sample.mjs <site-slug> <wordpress-url>
+STRAPI_URL=... STRAPI_API_TOKEN=... \
+  node scripts/wp-migration/migrate-sample.mjs <site-slug> <wordpress-url> --import
 ```
 
-**Step 2 — Data sync (run anytime, repeatable):**
-
-```bash
-STRAPI_URL=http://localhost:1337 STRAPI_API_TOKEN=<token> \
-  node scripts/wp-migration/import-to-strapi.mjs <site-slug> [wordpress-url] [--refresh]
-```
-
-**Prepare WP data:**
-
-```bash
-node scripts/wp-migration/pipeline.mjs <site-slug> <wordpress-url> all
-```
-
-See `scripts/wp-migration/README.md` for full details.
+Data lives under `output/<site>/wp-migration/preview/`.
 
 ### Arguments
 
-`$ARGUMENTS` — WordPress URL plus optional flags listed above.
+`$ARGUMENTS` — WordPress URL plus optional flags.
 
 If the URL is missing, stop and ask:
 

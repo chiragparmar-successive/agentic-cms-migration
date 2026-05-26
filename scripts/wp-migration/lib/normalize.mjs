@@ -1,14 +1,17 @@
-import path from 'node:path';
-import { readJson, writeJson, wpMigrationDir, stripHtml } from './utils.mjs';
+import { readJson, writeJson, stripHtml } from './utils.mjs';
+import { profilePaths, resolveProfile } from './migration-profile.mjs';
 
 const WP_TO_UNIVERSAL = {
   posts: 'article',
   pages: 'page',
 };
 
-export async function normalizeWordPress(siteSlug) {
-  const outDir = wpMigrationDir(siteSlug);
-  const raw = await readJson(path.join(outDir, 'raw/wp-export.json'));
+export async function normalizeWordPress(siteSlug, options = {}) {
+  const profileId = options.profile ?? 'preview';
+  resolveProfile(profileId);
+  const paths = profilePaths(siteSlug, profileId);
+
+  const raw = await readJson(paths.rawFile);
 
   const items = [];
   const taxonomies = {
@@ -39,6 +42,8 @@ export async function normalizeWordPress(siteSlug) {
     meta: {
       normalizedAt: new Date().toISOString(),
       sourceUrl: raw.meta?.sourceUrl,
+      profile: profileId,
+      sampleLimits: raw.meta?.sampleLimits ?? null,
       itemCount: items.length,
     },
     items,
@@ -49,14 +54,12 @@ export async function normalizeWordPress(siteSlug) {
       : [],
   };
 
-  const outPath = path.join(outDir, 'normalized/content.json');
-  await writeJson(outPath, payload);
-  return { outPath, itemCount: items.length };
+  await writeJson(paths.normalizedFile, payload);
+  return { paths, itemCount: items.length };
 }
 
 function normalizeEntry(entry, kind, wpType) {
   const seo = entry.yoast_head_json || {};
-  const acf = entry.acf || entry.meta?.acf || null;
 
   return {
     id: `wp:${wpType}:${entry.id}`,
@@ -81,7 +84,7 @@ function normalizeEntry(entry, kind, wpType) {
       canonical: seo.canonical || entry.link,
     },
     blocks: entry.content?.block_version ? entry.content : null,
-    acf,
+    acf: entry.acf || entry.meta?.acf || null,
     rawMeta: {
       type: entry.type,
       template: entry.template,

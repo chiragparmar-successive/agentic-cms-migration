@@ -1,48 +1,18 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
-import { readJson, writeJson, wpMigrationDir } from './utils.mjs';
-import { extractWordPress } from './extract.mjs';
-import { normalizeWordPress } from './normalize.mjs';
+import { readJson, writeJson } from './utils.mjs';
+import { profilePaths } from './migration-profile.mjs';
+import { findByWpId, strapiRequest } from './strapi-client.mjs';
 
-const ID_MAP_FILE = 'sync/id-map.json';
-const LOG_FILE = 'sync/import-log.json';
-
-function authHeaders(token) {
+export function emptyIdMap() {
   return {
-    Accept: 'application/json',
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${token}`,
+    category: {},
+    tag: {},
+    author: {},
+    media: {},
+    article: {},
+    page: {},
   };
-}
-
-async function strapiRequest(baseUrl, token, method, apiPath, body) {
-  const url = `${baseUrl.replace(/\/$/, '')}${apiPath}`;
-  const res = await fetch(url, {
-    method,
-    headers: authHeaders(token),
-    body: body ? JSON.stringify(body) : undefined,
-  });
-
-  const text = await res.text();
-  let json = null;
-  try {
-    json = text ? JSON.parse(text) : null;
-  } catch {
-    json = { raw: text };
-  }
-
-  if (!res.ok) {
-    const msg = json?.error?.message || json?.message || text || res.statusText;
-    throw new Error(`Strapi ${method} ${apiPath} → ${res.status}: ${msg}`);
-  }
-  return json;
-}
-
-async function findByWpId(baseUrl, token, plural, wpId) {
-  const q = `/api/${plural}?filters[wpId][$eq]=${wpId}&pagination[pageSize]=1`;
-  const res = await strapiRequest(baseUrl, token, 'GET', q);
-  const row = res?.data?.[0];
-  return row ? { id: row.id, documentId: row.documentId } : null;
 }
 
 async function upsertEntry(baseUrl, token, plural, wpId, payload, idMap, mapKey) {
@@ -65,9 +35,9 @@ async function upsertEntry(baseUrl, token, plural, wpId, payload, idMap, mapKey)
   return { action: 'created', id };
 }
 
-async function uploadMedia(baseUrl, token, mediaItem, idMap) {
+async function uploadMedia(baseUrl, token, mediaItem, idMap, { skipCached }) {
   const wpId = mediaItem.wpId;
-  if (idMap.media[wpId]) {
+  if (skipCached && idMap.media[wpId]) {
     return { action: 'skipped', id: idMap.media[wpId] };
   }
 
@@ -105,45 +75,42 @@ async function uploadMedia(baseUrl, token, mediaItem, idMap) {
   return { action: 'uploaded', id: file.id };
 }
 
-function emptyIdMap() {
-  return {
-    category: {},
-    tag: {},
-    author: {},
-    media: {},
-    article: {},
-    page: {},
-  };
-}
+/**
+ * Import normalized WordPress JSON into Strapi for one profile.
+ * Each profile has its own id-map — preview and full never share sync state.
+ */
+export async function runStrapiImport(siteSlug, options) {
+  const {
+    profileId,
+    strapiUrl,
+    strapiToken,
+    skipCachedMedia = true,
+  } = options;
 
-export async function importToStrapi(siteSlug, options) {
-  const { strapiUrl, strapiToken, refreshWp, wpUrl } = options;
-  const outDir = wpMigrationDir(siteSlug);
-  const syncDir = path.join(outDir, 'sync');
-  await fs.mkdir(syncDir, { recursive: true });
+  const paths = profilePaths(siteSlug, profileId);
+  await fs.mkdir(paths.syncDir, { recursive: true });
 
-  if (refreshWp && wpUrl) {
-    await extractWordPress(siteSlug, wpUrl);
-    await normalizeWordPress(siteSlug);
+  const normalized = await readJson(paths.normalizedFile);
+  if (normalized.meta?.profile && normalized.meta.profile !== profileId) {
+    throw new Error(
+      `Normalized data profile mismatch: expected "${profileId}", got "${normalized.meta.profile}". Re-run extract for this profile.`
+    );
   }
-
-  const normalized = await readJson(path.join(outDir, 'normalized/content.json'));
-  const idMapPath = path.join(outDir, ID_MAP_FILE);
 
   let idMap = emptyIdMap();
   try {
-    idMap = { ...emptyIdMap(), ...(await readJson(idMapPath)) };
+    idMap = { ...emptyIdMap(), ...(await readJson(paths.idMapFile)) };
   } catch {
-    /* first run */
+    /* first import for this profile */
   }
 
   const log = {
     startedAt: new Date().toISOString(),
     strapiUrl,
+    profile: profileId,
     results: {},
   };
 
-  // 1. Taxonomies
   for (const cat of normalized.taxonomies?.categories || []) {
     await upsertEntry(
       strapiUrl,
@@ -181,7 +148,6 @@ export async function importToStrapi(siteSlug, options) {
   }
   log.results.tags = Object.keys(idMap.tag).length;
 
-  // 2. Authors
   for (const author of normalized.authors || []) {
     await upsertEntry(
       strapiUrl,
@@ -201,11 +167,10 @@ export async function importToStrapi(siteSlug, options) {
   }
   log.results.authors = Object.keys(idMap.author).length;
 
-  // 3. Media
   log.results.media = { uploaded: 0, skipped: 0, errors: 0 };
   for (const media of normalized.media || []) {
     try {
-      const r = await uploadMedia(strapiUrl, strapiToken, media, idMap);
+      const r = await uploadMedia(strapiUrl, strapiToken, media, idMap, { skipCached });
       if (r.action === 'uploaded') log.results.media.uploaded += 1;
       else log.results.media.skipped += 1;
     } catch (err) {
@@ -214,7 +179,6 @@ export async function importToStrapi(siteSlug, options) {
     }
   }
 
-  // 4. Articles & pages
   const contentStats = { article: { created: 0, updated: 0 }, page: { created: 0, updated: 0 } };
 
   for (const item of normalized.items || []) {
@@ -255,8 +219,8 @@ export async function importToStrapi(siteSlug, options) {
   log.results.content = contentStats;
   log.finishedAt = new Date().toISOString();
 
-  await writeJson(idMapPath, idMap);
-  await writeJson(path.join(outDir, LOG_FILE), log);
+  await writeJson(paths.idMapFile, idMap);
+  await writeJson(paths.logFile, log);
 
-  return { idMapPath, logPath: path.join(outDir, LOG_FILE), log };
+  return { paths, log };
 }

@@ -1,18 +1,24 @@
-import path from 'node:path';
-import { fetchJson, fetchAllPages, writeJson, wpMigrationDir, ensureDir } from './utils.mjs';
+import { fetchJson, fetchAllPages, writeJson, ensureDir } from './utils.mjs';
+import { SAMPLE_LIMITS } from './sample-limits.mjs';
+import { profilePaths, resolveProfile } from './migration-profile.mjs';
 
 const CORE_RESOURCES = ['posts', 'pages', 'categories', 'tags', 'media', 'users'];
 
-export async function extractWordPress(siteSlug, wpUrl) {
+export async function extractWordPress(siteSlug, wpUrl, options = {}) {
+  const profileId = options.profile ?? 'preview';
+  const profile = resolveProfile(profileId);
+  const sample = options.sample ?? profile.sample;
+  const limits = options.limits ?? SAMPLE_LIMITS;
+  const paths = profilePaths(siteSlug, profileId);
+
   const base = wpUrl.replace(/\/$/, '');
-  const outDir = wpMigrationDir(siteSlug);
-  await ensureDir(path.join(outDir, 'raw'));
+  await ensureDir(paths.rawDir);
 
   await fetchJson(`${base}/wp-json/wp/v2/`);
 
   const types = await fetchJson(`${base}/wp-json/wp/v2/types`);
   const customTypes = Object.entries(types)
-    .filter(([key, meta]) => meta.rest_base && !CORE_RESOURCES.includes(meta.rest_base))
+    .filter(([, meta]) => meta.rest_base && !CORE_RESOURCES.includes(meta.rest_base))
     .map(([, meta]) => meta.rest_base);
 
   const data = {
@@ -20,6 +26,8 @@ export async function extractWordPress(siteSlug, wpUrl) {
       sourceUrl: base,
       extractedAt: new Date().toISOString(),
       engine: 'wp-migration/scripts',
+      profile: profileId,
+      sampleLimits: sample ? limits : null,
     },
     types: {},
     taxonomies: {},
@@ -29,7 +37,8 @@ export async function extractWordPress(siteSlug, wpUrl) {
 
   for (const resource of CORE_RESOURCES) {
     try {
-      data.types[resource] = await fetchAllPages(base, resource);
+      const maxItems = sample ? limits[resource] ?? limits.customType : null;
+      data.types[resource] = await fetchAllPages(base, resource, { maxItems });
     } catch (err) {
       data.types[resource] = { error: String(err.message) };
     }
@@ -37,7 +46,8 @@ export async function extractWordPress(siteSlug, wpUrl) {
 
   for (const restBase of customTypes) {
     try {
-      data.types[restBase] = await fetchAllPages(base, restBase);
+      const maxItems = sample ? limits.customType : null;
+      data.types[restBase] = await fetchAllPages(base, restBase, { maxItems });
     } catch (err) {
       data.types[restBase] = { error: String(err.message) };
     }
@@ -49,9 +59,8 @@ export async function extractWordPress(siteSlug, wpUrl) {
     data.acf = null;
   }
 
-  const rawPath = path.join(outDir, 'raw/wp-export.json');
-  await writeJson(rawPath, data);
-  return { rawPath, counts: summarizeCounts(data) };
+  await writeJson(paths.rawFile, data);
+  return { paths, counts: summarizeCounts(data) };
 }
 
 function summarizeCounts(data) {

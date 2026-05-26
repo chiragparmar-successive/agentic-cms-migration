@@ -11,6 +11,26 @@ Production-grade migration: **scripts execute**, **AI interprets unknowns only**
 
 Does **not** replace `/fullstack-builder` — use this command when the source is WordPress and Strapi is the target CMS.
 
+## Two commands (isolated — not sync)
+
+| Command | Profile | Purpose |
+|---------|---------|---------|
+| `/wordpress-to-strapi` | `preview` | Content model + schemas + **preview rows** in Strapi (WP-1 / WP-2) |
+| `/wordpress-to-strapi-full` | `full` | **Standalone full migration** — separate paths and id-map |
+
+| Path | Command 1 | Command 2 |
+|------|-----------|-----------|
+| WP export | `wp-migration/preview/raw/` | `wp-migration/full/raw/` |
+| Normalized | `wp-migration/preview/normalized/` | `wp-migration/full/normalized/` |
+| Import state | `preview/sync/id-map.json` | `full/sync/id-map.json` |
+| Schemas / analysis | `wp-migration/analysis/` (from preview) | Reuses preview schemas |
+
+Command 2 **must not** read preview `id-map.json` or treat command 1 as incremental sync.
+
+Preview caps: 5 posts, 3 pages, 10 categories, 5 tags, 5 media, 2 users (`lib/sample-limits.mjs`).
+
+**Never run command 2 on first pass** unless the user explicitly invokes `/wordpress-to-strapi-full`.
+
 ## Arguments
 
 - `$ARGUMENTS[0]` = WordPress site URL (required)
@@ -23,28 +43,22 @@ If URL is missing, stop and ask:
 
 `wordpress-to-strapi <wordpress-url> [--cms-only] [--with-frontend] [--skip-tests]`
 
+Full migration command: `.claude/commands/wordpress-to-strapi-full.md`
+
 ## Architecture
 
 ```
-SCRIPTS → Extract → Normalize → Detect
-              ↓
-         unknown-blocks?
-              ↓ yes
-         AI Interpreter → validate-ai.mjs
-              ↓
-    CHECKPOINT WP-1 (optional mapping review)
-              ↓
-    generate-schema.mjs  ← STEP 1: schema transfer (standalone)
-              ↓
-    strapi-bootstrapper + restart Strapi
-              ↓
-    import-to-strapi.mjs  ← STEP 2: data transfer (re-runnable alone)
-              ↓
-         CHECKPOINT WP-2
-              ↓
-    [optional] Phase B → Phase D → Phase E
-              ↓
-    Review mapping dashboard
+COMMAND 1 (/wordpress-to-strapi) — preview profile
+  Extract (capped) → Normalize → Detect → Review
+        ↓ unknown-blocks? → AI → validate-ai
+        ↓ CHECKPOINT WP-1
+  generate-schema.mjs → strapi-bootstrapper → restart Strapi
+        ↓ import-preview-to-strapi.mjs
+        ↓ CHECKPOINT WP-2
+
+COMMAND 2 (/wordpress-to-strapi-full) — full profile (separate)
+  Extract (all pages) → Normalize → import-full-to-strapi.mjs
+  (no detect/review; schemas from command 1)
 ```
 
 ## AI vs Code boundaries
@@ -58,7 +72,8 @@ SCRIPTS → Extract → Normalize → Detect
 | AI validation | 0% | `validate-ai.mjs` |
 | Schema files | 0% | `strapi-schema-generator` |
 | Strapi bootstrap | 0% | `strapi-bootstrapper` |
-| Content import | 0% | `content-etl-pipeline` + normalized JSON |
+| Preview import | 0% | `import-preview-to-strapi.mjs` |
+| Full migration import | 0% | `import-full-to-strapi.mjs` |
 | Frontend | ~40% | `page-component-generator` (optional) |
 
 **AI must NOT:** upload content, assign Strapi IDs, migrate media binaries, or write production DB rows directly.
@@ -85,11 +100,21 @@ SCRIPTS → Extract → Normalize → Detect
 
 ## Phase W1 — Extract (scripts, 0% AI)
 
+**Preview (command 1):**
+
 ```bash
-node scripts/wp-migration/pipeline.mjs <site-slug> <wordpress-url> extract
+node scripts/wp-migration/migrate-sample.mjs <site-slug> <wordpress-url>
+# or: pipeline.mjs <site-slug> <wp-url> extract --preview
 ```
 
-Output: `output/<site>/wp-migration/raw/wp-export.json`
+**Full (command 2 only):**
+
+```bash
+node scripts/wp-migration/migrate-full.mjs <site-slug> <wordpress-url>
+# or: pipeline.mjs <site-slug> <wp-url> extract --full
+```
+
+Output: `output/<site>/wp-migration/{preview|full}/raw/wp-export.json` (`meta.profile`)
 
 Also produce human summary at `output/<site>/docs/research/WP-API-EXTRACTION.md` (inventory + counts).
 
@@ -101,7 +126,7 @@ Also produce human summary at `output/<site>/docs/research/WP-API-EXTRACTION.md`
 node scripts/wp-migration/pipeline.mjs <site-slug> <wordpress-url> normalize
 ```
 
-Output: `output/<site>/wp-migration/normalized/content.json`
+Output: `output/<site>/wp-migration/preview/normalized/content.json` (or `full/` for command 2)
 
 Universal fields: `title`, `body`, `slug`, `seo`, taxonomies, media refs.
 
@@ -185,29 +210,34 @@ Use `strapi-bootstrapper` if `output/<site>/cms/` does not exist:
 
 ---
 
-## Phase W8 — Data transfer (standalone script, re-runnable)
+## Phase W8 — Import (profile-specific, not shared sync)
 
-**Step 2 — run anytime (does not require full orchestrator):**
+**Command 1 — preview import (after schema + Strapi restart):**
 
 ```bash
 STRAPI_URL=http://localhost:1337 STRAPI_API_TOKEN=<token> \
-  node scripts/wp-migration/import-to-strapi.mjs <site-slug>
+  node scripts/wp-migration/import-preview-to-strapi.mjs <site-slug>
 ```
 
-**Refresh from WordPress then sync:**
+Bundled: `migrate-sample.mjs <site-slug> <wp-url> --import`
+
+**Command 2 — full migration (after WP-2; separate profile):**
 
 ```bash
 STRAPI_URL=... STRAPI_API_TOKEN=... \
-  node scripts/wp-migration/import-to-strapi.mjs <site-slug> <wordpress-url> --refresh
+  node scripts/wp-migration/migrate-full.mjs <site-slug> <wordpress-url> --import
 ```
 
-- Source: `output/<site>/wp-migration/normalized/content.json`
-- Idempotent: matches `wpId` → update or create
-- State: `wp-migration/sync/id-map.json`, `sync/import-log.json`
+Or: `import-full-to-strapi.mjs <site-slug>` after `migrate-full.mjs` extract step.
+
+- Preview source: `wp-migration/preview/normalized/content.json`
+- Full source: `wp-migration/full/normalized/content.json`
+- Each profile has its own `sync/id-map.json` (no cross-profile reads)
+- Within a profile: idempotent by `wpId` on re-import
 
 Import order: categories → tags → authors → media → articles → pages.
 
-Do **not** use AI for this step. `content-etl-pipeline` skill is fallback only if script import fails.
+Do **not** use AI for imports. `content-etl-pipeline` is fallback only if scripts fail.
 
 ### ✋ CHECKPOINT WP-2 — Human approves imported content
 
@@ -268,13 +298,15 @@ Future: UI dashboard; for now JSON + markdown with Approve / Edit / Reject workf
 
 ## MVP phases (default first run)
 
-**Phase 1 (scripts only):** posts, pages, media, categories — enabled by default pipeline.
+**Phase 1 (sample):** content model + capped posts/pages/media/categories — `/wordpress-to-strapi`.
 
-**Phase 2:** ACF interpretation via W4 when unknown blocks exist.
+**Phase 2 (full data):** `/wordpress-to-strapi-full` after WP-1 + WP-2.
 
-**Phase 3:** Elementor + advanced layouts (same AI path, larger unknown-blocks).
+**Phase 3:** ACF interpretation via W4 when unknown blocks exist.
 
-**Phase 4:** Review dashboard workflow (WP-1 / WP-2 checkpoints).
+**Phase 4:** Elementor + advanced layouts (same AI path, larger unknown-blocks).
+
+**Phase 5:** Review dashboard workflow (WP-1 / WP-2 checkpoints).
 
 ---
 
@@ -286,16 +318,21 @@ Future: UI dashboard; for now JSON + markdown with Approve / Edit / Reject workf
 4. **URLs:** WP source, Strapi admin, GraphQL endpoint, optional frontend
 5. **Import + mapping status:** counts, pending review rows, failed imports
 
-## Incremental sync (repeatable)
+## Re-running imports
 
-When WordPress content changed later, **only run the import script** (with optional refresh):
+Re-import **within the same profile** after re-extract:
 
 ```bash
-STRAPI_URL=... STRAPI_API_TOKEN=... \
-  node scripts/wp-migration/import-to-strapi.mjs <site-slug> <wordpress-url> --refresh
+# Preview refresh
+node scripts/wp-migration/pipeline.mjs <site-slug> <wp-url> all --preview
+STRAPI_URL=... STRAPI_API_TOKEN=... node scripts/wp-migration/import-preview-to-strapi.mjs <site-slug>
+
+# Full refresh
+node scripts/wp-migration/pipeline.mjs <site-slug> <wp-url> all --full
+STRAPI_URL=... STRAPI_API_TOKEN=... node scripts/wp-migration/import-full-to-strapi.mjs <site-slug>
 ```
 
-No need to regenerate schemas unless WP field structure changed.
+Do not mix profiles. Regenerate schemas only when WP structure changes (preview detect).
 
 ## Failure handling
 

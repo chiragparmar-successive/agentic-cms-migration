@@ -1,6 +1,6 @@
 ---
 name: wordpress-to-strapi
-description: Hybrid WordPress → Strapi migration orchestrator. Deterministic scripts for extract/normalize/import; AI only for unknown ACF/Elementor structures.
+description: Hybrid WordPress → Strapi migration. Command 1 = content model + preview data. Command 2 = standalone full migration (not sync).
 ---
 
 # WordPress → Strapi Agent
@@ -9,9 +9,15 @@ description: Hybrid WordPress → Strapi migration orchestrator. Deterministic s
 
 - `.claude/skills/orchestrators/wordpress-to-strapi/SKILL.md`
 
-## Command
+## Commands
 
-- `.claude/commands/wordpress-to-strapi.md` → `/wordpress-to-strapi`
+| Slash command | Role |
+|---------------|------|
+| `/wordpress-to-strapi` | **Command 1** — preview profile: schemas + sample rows |
+| `/wordpress-to-strapi-full` | **Command 2** — full profile: complete migration (isolated) |
+
+- `.claude/commands/wordpress-to-strapi.md`
+- `.claude/commands/wordpress-to-strapi-full.md`
 
 ## When to use
 
@@ -27,13 +33,15 @@ description: Hybrid WordPress → Strapi migration orchestrator. Deterministic s
 ## Arguments
 
 - `<wordpress-url>` (required)
-- `--cms-only` | `--with-frontend` | `--skip-tests` (optional)
+- `--cms-only` | `--with-frontend` | `--skip-tests` (optional, command 1)
 
 ## Checkpoints
 
 | ID | Gate |
 |----|------|
 | WP-1 | Human approves content model + `REVIEW-MAPPING.md` |
-| WP-2 | Human approves imported CMS content |
+| WP-2 | Human approves **preview** content in Strapi |
 | 2 | Test suite (if Phase B enabled) |
 | 3–4 | Quality gates (if Phase E enabled) |
+
+Run command 2 only after WP-1 and WP-2.

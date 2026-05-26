@@ -24,7 +24,7 @@ try {
   console.log('  schemas:', result.apiRoot);
   console.log('  manifest:', result.manifestPath);
   console.log('');
-  console.log('Next: restart Strapi (npm run develop), then run import-to-strapi.mjs');
+  console.log('Next: restart Strapi (npm run develop), then run import-preview-to-strapi.mjs');
 } catch (err) {
   console.error('[generate-schema] FAILED', err.message);
   process.exit(1);

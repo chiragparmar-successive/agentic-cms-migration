@@ -269,7 +269,7 @@ export async function generateStrapiSchemas(siteSlug) {
       generatedAt: new Date().toISOString(),
       siteSlug,
       schemaRoot: apiRoot,
-      note: 'Restart Strapi after applying schemas. Run import-to-strapi.mjs to sync content.',
+      note: 'Restart Strapi after applying schemas. Run import-preview-to-strapi.mjs (preview) or migrate-full.mjs (full migration).',
     },
     types: allTypes.map((t) => ({
       apiId: t.apiId,
