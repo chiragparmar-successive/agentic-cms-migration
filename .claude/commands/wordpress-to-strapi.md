@@ -40,12 +40,18 @@ Creates under `output/<site>/`:
 
 ### Phase D — frontend (orchestrator only)
 
+**CMS-powered:** All copy, images, SEO, and nav labels must come from Strapi via `cms` adapter — no hardcoded site content.
+
+**Look like original:** After generation, compare each P0 route against `wordpressUrl` (from `wp-migration/site-config.json`) vs `http://localhost:3000`; write `docs/VISUAL-PARITY-REPORT.md` and fix until layout/content match (without hardcoding copy).
+
 After WP-2 and CHECKPOINT 2 (if tests ran), run skills in order:
 
 1. `.claude/skills/phase-d/nextjs-scaffolder/SKILL.md` → `output/<site>/frontend/`
-2. `.claude/skills/phase-d/cms-adapter-generator/SKILL.md`
-3. `.claude/skills/phase-d/page-component-generator/SKILL.md`
+2. `.claude/skills/phase-d/cms-adapter-generator/SKILL.md` → `docs/CMS-ADAPTER-COVERAGE.md`
+3. `.claude/skills/phase-d/page-component-generator/SKILL.md` → `docs/FRONTEND-CMS-WIRING.md` + visual compare vs original URL
 4. `.claude/skills/phase-d/route-validator/SKILL.md`
+
+Then: `npm run build`, Phase E parity tests, `npm run report` (PDF).
 
 ### Skill
 

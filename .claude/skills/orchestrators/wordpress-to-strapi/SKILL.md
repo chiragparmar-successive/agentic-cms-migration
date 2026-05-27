@@ -104,7 +104,7 @@ Data-only runner: `output/<site>/wp-migration/run-full-migration.mjs` (never run
 | Strapi bootstrap      | 0%   | `strapi-bootstrapper`                                        |
 | Preview import        | 0%   | `import-preview-to-strapi.mjs`                               |
 | Full migration import | 0%   | `import-full-to-strapi.mjs`                                  |
-| Frontend              | ~40% | `page-component-generator` (default; skip with `--cms-only`) |
+| Frontend              | ~40% | `page-component-generator` (default; skip with `--cms-only`); **content 100% from Strapi via adapter** |
 | Playwright tests      | 0%   | Phase B (default; skip with `--skip-tests` or `--cms-only`)  |
 | Quality gates         | 0%   | Phase E (default; skip with `--cms-only`)                    |
 
@@ -297,10 +297,43 @@ Required before Phase D when tests are enabled.
 
 After WP-2 and CHECKPOINT 2 (when tests ran):
 
+### D0 — Visual references (required for “looks like WP”)
+
+If `output/<site>/docs/research/pages/` and `CONTENT-STRUCTURE.md` exist (from Phase A `site-crawler`), use them.
+
+If they do **not** exist (common for WordPress-only runs), you MUST treat Phase B exploratory baseline as the design + route reference source:
+
+- `output/<site>/test/exploratory/baseline/index.json` (route inventory)
+- `output/<site>/test/exploratory/baseline/**/screenshot.png` + `text.txt` (design + semantic content references)
+
+Do not proceed to generation without one of these reference sets, otherwise the frontend will not resemble the source.
+
+### D1 — Generate frontend (CMS-powered only)
+
 1. `nextjs-scaffolder`
-2. `cms-adapter-generator`
-3. `page-component-generator` — AI suggests layout mapping; code scaffolds routes
+2. `cms-adapter-generator` — all content types mapped to `ICMSAdapter` methods; see `CMS-ADAPTER-COVERAGE.md`
+3. `page-component-generator` — **no hardcoded site copy**; every page fetches via `cms`; must use visual reference set (Phase A or B)
 4. `route-validator`
+
+**Content rule:** User-visible text, images, SEO, and nav labels MUST come from Strapi via the adapter. Forbidden: lorem ipsum, demo arrays, or TS constants mirroring WordPress copy. If Strapi has no entry for a route, use `notFound()` or a minimal empty state — never fake content.
+
+**Original URL:** Store and use `wordpressUrl` from `output/<site>/wp-migration/site-config.json` as the legacy comparison target for all parity work.
+
+### D2 — Compare with original URL + initial verification (required)
+
+Immediately after Phase D pages exist:
+
+1. **Build gate:** `npm run build` in `output/<site>/frontend` (must be green)
+2. **CMS wiring audit:** confirm `output/<site>/docs/FRONTEND-CMS-WIRING.md` — every P0 route lists adapter method + pass
+3. **Visual look-alike vs original:**
+   - Legacy: `wordpressUrl` + paths from route inventory / `index.json`
+   - New: `http://localhost:3000` (same paths)
+   - Side-by-side or Playwright screenshots per P0 route; fix layout/styles until recognizably the same site (content still from CMS)
+   - Write `output/<site>/docs/VISUAL-PARITY-REPORT.md` (see `page-component-generator` Step 8)
+4. **Automated tests:** Phase E parity run against the generated frontend
+5. **Reports:** HTML + JUnit + PDF (`npm run report`) — same standard as Phase B
+
+Do not mark Phase D complete until P0 routes pass CMS wiring AND visual/content parity vs the original URL (partial allowed only with documented gaps).
 
 ---
 
@@ -314,6 +347,15 @@ When frontend exists (and tests approved if Phase B ran):
 - `sonarqube-gate`
 - `lighthouse-ci-gate`
 - `ai-remediation-agent` (max 5 iterations)
+
+### Reporting (required)
+
+After the parity test run, you MUST ensure:
+
+- `output/<site>/test/playwright-report/` exists (HTML report)
+- `output/<site>/test/reports/junit.xml` exists and is non-empty
+- Run the workspace report generator (`npm run report`) to produce a timestamped PDF under:
+  `output/<site>/test/reports/client-report-<timestamp>.pdf`
 
 ### ✋ CHECKPOINTs 3–4
 
@@ -350,9 +392,10 @@ Future: UI dashboard; for now JSON + markdown with Approve / Edit / Reject workf
 
 1. **Paths:** `output/<site>/cms/`, `output/<site>/frontend/` (default), Playwright suite (default)
 2. **Migration artifacts:** `wp-migration/preview/`, `analysis/`, `review/`, `orchestrator-plan.json`
-3. **Commands:** Strapi dev, Next dev, Playwright test run (unless `--cms-only`)
-4. **URLs:** WP source, Strapi admin, GraphQL endpoint, frontend dev URL
-5. **Status:** import counts, test baseline, quality gate results
+3. **Frontend parity docs:** `docs/CMS-ADAPTER-COVERAGE.md`, `docs/FRONTEND-CMS-WIRING.md`, `docs/VISUAL-PARITY-REPORT.md` (legacy `wordpressUrl` vs Next.js)
+4. **Commands:** Strapi dev, Next dev, Playwright test run (unless `--cms-only`)
+5. **URLs:** WP source (`wordpressUrl`), Strapi admin, GraphQL endpoint, frontend dev URL
+6. **Status:** import counts, CMS wiring audit, visual parity vs original, test baseline, quality gate results
 
 ## Re-running imports
 

@@ -11,6 +11,8 @@ Phase: **D — Frontend Generation** (Step 2 of 4)
 
 Generate a type-safe CMS data access layer that decouples the frontend from the specific CMS implementation.
 
+**Every page in Phase D must consume content only through this adapter.** No page may bypass `cms` to read static JSON or hardcoded copy. Strapi (populated in Phase W/C) is the single source of truth for all user-visible text and media URLs.
+
 ## Precondition
 
 - Next.js project scaffolded (from `nextjs-scaffolder`)
@@ -112,6 +114,21 @@ cd output/<site>/frontend
 npx tsc --noEmit
 ```
 
+### Step 6: CMS Coverage Matrix (required)
+
+Before handing off to `page-component-generator`, create `output/<site>/docs/CMS-ADAPTER-COVERAGE.md`:
+
+| Content type (Strapi) | Adapter method | Used by route(s) |
+|-----------------------|----------------|------------------|
+| e.g. `api::page.page` | `getPage(slug)` | `/about`, `/contact` |
+| e.g. `api::article.article` | `getPost(slug)` | `/blog/[slug]` |
+
+Rules:
+
+- One adapter method per collection/single type from the approved content model
+- Methods must return populated fields needed for layout (title, slug, body, SEO, media, dynamic zones/components)
+- `getMediaUrl()` must resolve Strapi upload URLs for `next/image`
+
 ## Design Principle: Adapter Pattern
 
 The `ICMSAdapter` interface enables:
@@ -125,7 +142,9 @@ The `ICMSAdapter` interface enables:
 - `src/lib/cms/strapi.ts` — StrapiAdapter implementation
 - `src/lib/cms/types.ts` — Type definitions
 - `src/lib/cms/index.ts` — Barrel export
+- `output/<site>/docs/CMS-ADAPTER-COVERAGE.md` — content type → method → route map
 - TypeScript compiles with zero errors
+- All Strapi content types used on the site have a corresponding adapter method (no orphan types)
 
 ## Downstream
 

@@ -94,7 +94,11 @@ Apply vendored skill packs as quality foundations:
 3. `vercel-composition-patterns` — component API design
 4. `next-cache-components` — cache components (Next.js 16)
 
-### Step 6: Build Verification
+### Step 6: Scaffold Placeholder Page (CMS-ready only)
+
+The default `app/page.tsx` must NOT ship marketing copy. Use a minimal shell that will be replaced by `page-component-generator`, or a thin server component that calls `cms.getHomePage()` once the adapter exists. Never leave create-next-app boilerplate (“Get started by editing…”) in the final deliverable.
+
+### Step 7: Build Verification
 
 ```bash
 cd output/<site>/frontend

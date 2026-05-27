@@ -43,9 +43,13 @@ npx playwright test
 
 ### Step 3: Compare Against Legacy Baseline
 
+**Legacy URL:** For WordPress migrations, use `output/<site>/wp-migration/site-config.json` → `wordpressUrl` as the canonical original site. Playwright `baseURL` for the new stack must be the Next.js app only — never point tests at WordPress after Phase D.
+
+**Content expectation:** Tests assert behavior and visible content that Strapi supplies. If a test fails because the frontend shows hardcoded copy instead of CMS data, classify as `data` / app-defect and fix the page to use `cms` — do not weaken assertions.
+
 For each test:
 1. Compare pass/fail status with legacy baseline
-2. For visual regression tests, compare new screenshots against legacy baselines
+2. For visual regression tests, compare new screenshots against legacy baselines (same path on `wordpressUrl` vs `localhost:3000`)
 3. Classify results:
    - **Parity** — test passes on both legacy and new stack
    - **Regression** — test passed on legacy but fails on new stack

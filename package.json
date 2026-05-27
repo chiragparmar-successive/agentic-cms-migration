@@ -7,6 +7,7 @@
     "report": "node scripts/generate-report.mjs"
   },
   "devDependencies": {
+    "@anthropic-ai/claude-code": "^2.1.152",
     "@playwright/test": "^1.44.0",
     "fast-xml-parser": "^4.3.0"
   }

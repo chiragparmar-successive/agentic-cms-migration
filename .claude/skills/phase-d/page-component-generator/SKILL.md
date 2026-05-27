@@ -11,17 +11,21 @@ Phase: **D — Frontend Generation** (Step 3 of 4)
 
 Generate all pages, layouts, and components for the Next.js 16 App Router project, wired to the CMS adapter.
 
+**Core rule:** All user-visible content (headings, body copy, nav labels, CTAs, images, SEO metadata, lists, cards) MUST come from Strapi via `cms` / `ICMSAdapter`. The frontend is a **presentation layer** over CMS data — not a static marketing site with placeholder copy.
+
 ## Precondition
 
 - CMS adapter generated (from `cms-adapter-generator`)
-- Design references available from Phase A crawl
-- Route inventory from `site-crawler`
+- Design references available (preferred: Phase A crawl; fallback: Phase B exploratory baseline)
+- Route inventory available (preferred: Phase A `site-crawler`; fallback: Phase B exploratory `index.json`)
 - Content Model Spec approved (CHECKPOINT 1)
 
 ## Input
 
-- Route inventory: `output/<site>/docs/research/CONTENT-STRUCTURE.md`
-- Design references: `output/<site>/docs/research/pages/`
+- Route inventory (preferred): `output/<site>/docs/research/CONTENT-STRUCTURE.md`
+- Route inventory (fallback): `output/<site>/test/exploratory/baseline/index.json`
+- Design references (preferred): `output/<site>/docs/research/pages/`
+- Design references (fallback): `output/<site>/test/exploratory/baseline/**/screenshot.png` + `text.txt`
 - CMS adapter: `output/<site>/frontend/src/lib/cms/`
 - Generated types: `output/<site>/frontend/src/generated/graphql.ts`
 - Vercel skill packs (quality guardrails):
@@ -30,7 +34,43 @@ Generate all pages, layouts, and components for the Next.js 16 App Router projec
   - `.claude/skills/frontend/vercel/vercel-composition-patterns/SKILL.md`
   - `.claude/skills/frontend/vercel/next-cache-components/SKILL.md`
 
+## CMS-powered content (mandatory)
+
+### Allowed
+
+- Fetch all page/section data in **Server Components** via `import { cms } from '@/lib/cms'`
+- Map CMS fields → props on presentational components (`Hero`, `RichText`, `BlogList`, etc.)
+- Static UI chrome only: layout grid classes, spacing tokens, icon names, animation toggles
+- `generateMetadata()` / `generateStaticParams()` driven by CMS fields
+- Empty states when CMS returns no data (`notFound()`, minimal “no content” message — no fake marketing copy)
+
+### Forbidden
+
+- Hardcoded headlines, paragraphs, blog posts, team bios, prices, or nav item labels in `page.tsx` or section components
+- Lorem ipsum, “Welcome to our site”, or demo arrays used as the primary content source
+- Duplicating WordPress copy into TS/JS constants instead of reading Strapi
+- Client-side `fetch` to Strapi for content that should be server-fetched (unless interactivity requires it)
+
+### Verification (per page)
+
+Before marking a page complete:
+
+1. Remove or grep for forbidden patterns: no large string literals that mirror site copy
+2. Confirm the page breaks or shows empty state if Strapi is down / entry missing (proves CMS dependency)
+3. Confirm rendered text matches Strapi preview import for that route (same slug/title/body)
+
+Record results in `output/<site>/docs/FRONTEND-CMS-WIRING.md` (one row per route: adapter method, content type, pass/fail).
+
 ## Execution
+
+### Step 0: Enforce Visual Reference Coverage (required)
+
+If `output/<site>/docs/research/pages/` does not exist (common in WordPress-only flows), you MUST use the Phase B exploratory baseline as the design reference source:
+
+- Screenshots: `output/<site>/test/exploratory/baseline/**/screenshot.png`
+- Per-route visible text: `output/<site>/test/exploratory/baseline/**/text.txt`
+
+If neither preferred nor fallback design references exist, STOP and run Phase B exploratory crawl first (see `.claude/commands/phase-b.md`).
 
 ### Step 1: Route-to-Page Mapping
 
@@ -120,6 +160,38 @@ For each generated page:
 3. Verify media URLs resolve correctly
 4. Verify metadata is populated from CMS
 
+### Step 7: Visual Parity Checklist (required)
+
+For the top P0 routes (home + primary landing + one content detail page), ensure:
+
+1. **Layout parity** — header/nav/footer structure matches the reference screenshots (positioning + hierarchy, not pixel perfection).
+2. **Typography + spacing** — base font scale, heading sizes, and section spacing are consistent with references.
+3. **Navigation parity** — key links/CTAs exist and work.
+4. **Content parity** — primary headings and above-the-fold text match baseline `text.txt` **and** match live Strapi data (CMS is source of truth; baseline is the acceptance target).
+
+### Step 8: Compare with original URL (required after generation)
+
+After `npm run build` and with Next.js + Strapi running locally:
+
+1. **Source of truth URL** — read from `output/<site>/wp-migration/site-config.json` → `wordpressUrl` (WordPress flows) or Phase A/B legacy URL.
+2. **Target URL** — `http://localhost:3000` (or `playwright.config.ts` `baseURL`).
+3. For each P0 route, open **legacy URL** and **new frontend** side by side (or use Playwright screenshots):
+   - Capture full-page screenshot of legacy route
+   - Capture same route on Next.js
+   - Compare: layout regions, nav, hero, primary H1/H2, image presence, footer
+4. **Fix loop** — adjust Tailwind/layout/components until the new site is recognizably the same brand/layout as the original. Do not “fix” by hardcoding copy; fix structure/styles and ensure CMS fields populate the right slots.
+5. Write `output/<site>/docs/VISUAL-PARITY-REPORT.md`:
+
+```markdown
+# Visual Parity Report
+
+| Route | Legacy URL | New URL | CMS wired | Layout match | Content match | Notes |
+|-------|------------|---------|-----------|--------------|---------------|-------|
+| /     | ...        | ...     | yes       | pass/partial | pass/partial  | ...   |
+```
+
+Gate: **no route may ship with `CMS wired: no`** or `Content match: fail` on P0 routes.
+
 ## Output Contract
 
 - Generated pages in `output/<site>/frontend/src/app/`
@@ -130,6 +202,9 @@ For each generated page:
   - Routes covered: N/N
   - CMS integration status per route
   - Vercel quality gate compliance
+  - Visual parity notes for P0 routes (what matched / what diverged)
+- `output/<site>/docs/FRONTEND-CMS-WIRING.md` — per-route CMS adapter usage
+- `output/<site>/docs/VISUAL-PARITY-REPORT.md` — legacy URL vs new frontend comparison
 
 ## Downstream
 

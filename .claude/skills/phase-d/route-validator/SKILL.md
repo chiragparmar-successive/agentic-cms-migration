@@ -83,9 +83,18 @@ Generate route parity report:
 |---|---|
 ```
 
-### Step 6: Gate Decision
+### Step 6: CMS + visual gate (before Phase E)
 
-- If **missing routes = 0**: Route parity confirmed, proceed to Phase E.
+Confirm alongside route parity:
+
+1. `output/<site>/docs/FRONTEND-CMS-WIRING.md` exists and all P0 routes are `pass`
+2. `output/<site>/docs/VISUAL-PARITY-REPORT.md` exists with legacy URL vs new frontend comparison
+
+Block Phase E if P0 routes have `CMS wired: no` or `Content match: fail`.
+
+### Step 7: Gate Decision
+
+- If **missing routes = 0** and CMS/visual gates pass: Route parity confirmed, proceed to Phase E.
 - If **missing routes > 0**: Report missing routes and block Phase E until fixed.
 
 ## Output Contract
