@@ -1,40 +1,61 @@
 ---
-description: WordPress → Strapi full-stack partial E2E (default) — CMS model, sample data, Playwright tests, Next.js frontend, quality gates. Opt out with --cms-only or --skip-tests.
-argument-hint: "<wordpress-url> [--cms-only] [--skip-tests]"
+description: WordPress → Strapi full-stack partial E2E (default) — CMS + Playwright + Next.js + quality gates. Same Phase B/D/E as fullstack-builder.
+argument-hint: "<wordpress-url> [--cms-only] [--skip-tests] [--import]"
 ---
 
 ## `/wordpress-to-strapi`
 
-**Default (no flags):** runs the **complete partial stack** — not CMS-only.
+**Important:** Running only `wordpress-to-strapi.mjs` does **not** create the frontend. That script covers **Phase W (CMS)** only. With **no flags**, you must continue the orchestrator through **Phase B, D, and E** (same skills as `/fullstack-builder`).
 
-| Phase                                   | Default | Opt out        |
-| --------------------------------------- | ------- | -------------- |
-| CMS partial E2E (model + capped import) | Yes     | —              |
-| Phase B — Playwright tests (legacy WP)  | Yes     | `--skip-tests` |
-| Phase D — Next.js frontend              | Yes     | `--cms-only`   |
-| Phase E — quality gates                 | Yes     | `--cms-only`   |
+### Default (no flags) — same stack as fullstack
 
-**Partial data only** — full WordPress volume is `/wp-to-strapi-db-migration` (data-only, no B/D/E).
+| Phase | What runs | Same as fullstack? |
+|-------|-----------|-------------------|
+| W | WP extract → model → schemas → Strapi bootstrap → preview import | WordPress-specific (replaces A+C) |
+| B | `.claude/commands/phase-b.md` on legacy WP URL | Yes |
+| D | `nextjs-scaffolder` → `cms-adapter-generator` → `page-component-generator` → `route-validator` | Yes |
+| E | `playwright-behavioral-parity`, `sonarqube-gate`, `lighthouse-ci-gate`, `ai-remediation-agent` | Yes |
+
+Opt out: `--cms-only` (W only), `--skip-tests` (W + D + E).
+
+### Phase W — scripts (agent runs these)
+
+```bash
+SITE=wordpress-zcwowkggsk4k08cgsgwo4c8w-sakha-cloud
+WP_URL=https://wordpress-zcwowkggsk4k08cgsgwo4c8w.sakha.cloud/
+
+node scripts/wp-migration/wordpress-to-strapi.mjs "$SITE" "$WP_URL"
+# restart Strapi, then:
+STRAPI_URL=http://localhost:1337 STRAPI_API_TOKEN=<token> \
+  node scripts/wp-migration/wordpress-to-strapi.mjs "$SITE" "$WP_URL" --import
+```
+
+Creates under `output/<site>/`:
+
+- `wp-migration/` (preview data, analysis, `site-config.json`)
+- `cms/` (after `strapi-bootstrapper` + schema apply)
+- `run-full-migration.mjs` (full data later)
+
+**Do not stop here** if the user expected a frontend — proceed to Phase B/D/E below.
+
+### Phase D — frontend (orchestrator only)
+
+After WP-2 and CHECKPOINT 2 (if tests ran), run skills in order:
+
+1. `.claude/skills/phase-d/nextjs-scaffolder/SKILL.md` → `output/<site>/frontend/`
+2. `.claude/skills/phase-d/cms-adapter-generator/SKILL.md`
+3. `.claude/skills/phase-d/page-component-generator/SKILL.md`
+4. `.claude/skills/phase-d/route-validator/SKILL.md`
 
 ### Skill
 
 - `.claude/skills/orchestrators/wordpress-to-strapi/SKILL.md`
 
-### Script (CMS steps)
-
-```bash
-node scripts/wp-migration/wordpress-to-strapi.mjs <site-slug> <wordpress-url>
-STRAPI_URL=... STRAPI_API_TOKEN=... \
-  node scripts/wp-migration/wordpress-to-strapi.mjs <site-slug> <wordpress-url> --import
-```
-
-Pass the same flags to the script when running: `[--cms-only] [--skip-tests]`.
-
-Orchestrator plan: `output/<site>/wp-migration/orchestrator-plan.json`
-
 ### Arguments
 
-`$ARGUMENTS` — WordPress URL; optional `--cms-only`, `--skip-tests`.
+`$ARGUMENTS` — WordPress URL; optional `--cms-only`, `--skip-tests`, `--import`.
+
+Site slug for this host: `wordpress-zcwowkggsk4k08cgsgwo4c8w-sakha-cloud`
 
 If the URL is missing, stop and ask:
 

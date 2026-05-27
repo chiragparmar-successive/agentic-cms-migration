@@ -1,11 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { readJson, writeJson, wpMigrationDir, repoRoot } from './utils.mjs';
-import {
-  buildDefaultSiteConfig,
-  DEFAULT_STRAPI,
-  ENGINE_VERSION,
-} from './defaults.mjs';
+import { buildDefaultSiteConfig, DEFAULT_STRAPI } from './defaults.mjs';
 
 export const SITE_CONFIG_FILE = 'site-config.json';
 export const FULL_RUNNER_FILE = 'run-full-migration.mjs';
@@ -29,9 +25,7 @@ export async function loadSiteConfig(siteSlugOrDir) {
     config.migrationDir = migrationDir;
     return config;
   } catch {
-    throw new Error(
-      `Missing ${file}. Run wordpress-to-strapi.mjs for this site first.`
-    );
+    throw new Error(`Missing ${file}. Run wordpress-to-strapi.mjs for this site first.`);
   }
 }
 
@@ -54,7 +48,6 @@ export async function initSiteConfig({ siteSlug, wordpressUrl }) {
   return config;
 }
 
-/** Merge Strapi content types from structure-analysis.json */
 export async function syncSiteConfigFromAnalysis(siteSlugOrDir) {
   const migrationDir = resolveMigrationDir(siteSlugOrDir);
   const config = await loadSiteConfig(migrationDir);
@@ -68,15 +61,12 @@ export async function syncSiteConfigFromAnalysis(siteSlugOrDir) {
     return config;
   }
 
-  const byKind = new Map(
-    (config.strapi.contentTypes || []).map((ct) => [ct.kind, ct])
-  );
+  const byKind = new Map((config.strapi.contentTypes || []).map((ct) => [ct.kind, ct]));
 
   for (const ct of analysis.collectionTypes || []) {
-    const kind =
-      ct.apiId === 'page' || ct.kind === 'singleType' && ct.apiId === 'page'
-        ? 'page'
-        : ct.apiId.replace(/-/g, '_');
+    const kind = ct.apiId === 'page' || (ct.kind === 'singleType' && ct.apiId === 'page')
+      ? 'page'
+      : ct.apiId.replace(/-/g, '_');
     const strapiApi = pluralizeApi(ct.apiId);
     const existing = byKind.get(kind) || {
       kind,
@@ -116,27 +106,19 @@ import path from 'node:path';
 import { runFullDataMigration } from '{{ENGINE_IMPORT}}';
 
 const migrationDir = path.dirname(fileURLToPath(import.meta.url));
-
 await runFullDataMigration({ migrationDir, argv: process.argv });
 `;
 
-/** Write runnable migration script into output/<site>/wp-migration/ */
 export async function generateFullMigrationRunner(siteSlugOrDir) {
   const migrationDir = resolveMigrationDir(siteSlugOrDir);
   const config = await loadSiteConfig(migrationDir);
   const engineRoot = path.join(repoRoot(), 'scripts/wp-migration');
-  const engineImport = path
-    .relative(migrationDir, path.join(engineRoot, 'lib/run-full-migration.mjs'))
-    .replace(/\\\\/g, '/');
+  const engineImport = path.relative(migrationDir, path.join(engineRoot, 'lib/run-full-migration.mjs')).replace(/\\/g, '/');
 
   const runnerPath = path.join(migrationDir, FULL_RUNNER_FILE);
   const content = RUNNER_TEMPLATE.replace('{{ENGINE_IMPORT}}', engineImport);
-  await fs.writeFile(runnerPath, content, { utf8 });
-  try {
-    await fs.chmod(runnerPath, 0o755);
-  } catch {
-    /* windows */
-  }
+  await fs.writeFile(runnerPath, content, { encoding: 'utf8' });
+  try { await fs.chmod(runnerPath, 0o755); } catch {}
 
   config.fullMigrationRunner = FULL_RUNNER_FILE;
   config.runnerGeneratedAt = new Date().toISOString();
@@ -146,18 +128,9 @@ export async function generateFullMigrationRunner(siteSlugOrDir) {
 }
 
 export function emptyIdMapFromConfig(config) {
-  const map = {
-    category: {},
-    tag: {},
-    author: {},
-    media: {},
-  };
+  const map = { category: {}, tag: {}, author: {}, media: {} };
   for (const ct of config.strapi?.contentTypes || DEFAULT_STRAPI.contentTypes) {
     if (ct.import !== false) map[ct.idMapKey] = {};
   }
   return map;
-}
-
-export function getContentTypeMapping(config, kind) {
-  return (config.strapi?.contentTypes || []).find((ct) => ct.kind === kind);
 }

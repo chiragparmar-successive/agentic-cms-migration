@@ -1,16 +1,12 @@
 #!/usr/bin/env node
-/**
- * @deprecated Use profile-specific importers instead:
- *   import-preview-to-strapi.mjs  — command 1 (preview / sample data)
- *   import-full-to-strapi.mjs     — command 2 (full migration)
- */
+/** @deprecated Use import-preview-to-strapi.mjs / import-full-to-strapi.mjs */
 console.error(`
 import-to-strapi.mjs is deprecated.
 
-E2E partial (/wordpress-to-strapi):
-  node scripts/wp-migration/wordpress-to-strapi.mjs <site-slug> <wp-url> [--import]
+Preview import:
+  node scripts/wp-migration/import-preview-to-strapi.mjs <site-slug>
 
-Data only (/wp-to-strapi-db-migration):
-  node scripts/wp-migration/wp-to-strapi-db-migration.mjs <site-slug> <wp-url> [--import]
+Full import:
+  node scripts/wp-migration/import-full-to-strapi.mjs <site-slug>
 `);
 process.exit(1);
