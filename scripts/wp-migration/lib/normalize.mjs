@@ -1,25 +1,31 @@
 import { readJson, writeJson, stripHtml } from './utils.mjs';
-import { profilePaths, resolveProfile } from './migration-profile.mjs';
+import { profilePaths } from './migration-profile.mjs';
+import { loadSiteConfig } from './site-config.mjs';
+import { DEFAULT_WORDPRESS } from './defaults.mjs';
 
-const WP_TO_UNIVERSAL = {
-  posts: 'article',
-  pages: 'page',
-};
+/**
+ * @param {object|string} configOrSlug
+ * @param {{ profile?: string }} [options]
+ */
+export async function normalizeWordPress(configOrSlug, options = {}) {
+  const config =
+    typeof configOrSlug === 'string'
+      ? await loadSiteConfig(configOrSlug)
+      : configOrSlug;
 
-export async function normalizeWordPress(siteSlug, options = {}) {
   const profileId = options.profile ?? 'preview';
-  resolveProfile(profileId);
-  const paths = profilePaths(siteSlug, profileId);
+  const paths = profilePaths(config, profileId);
+  const typeMapping =
+    config.wordpress?.typeMapping ?? DEFAULT_WORDPRESS.typeMapping;
 
   const raw = await readJson(paths.rawFile);
-
   const items = [];
   const taxonomies = {
     categories: normalizeTaxonomy(raw.types.categories),
     tags: normalizeTaxonomy(raw.types.tags),
   };
 
-  for (const [wpType, universalKind] of Object.entries(WP_TO_UNIVERSAL)) {
+  for (const [wpType, universalKind] of Object.entries(typeMapping)) {
     const batch = raw.types[wpType];
     if (!Array.isArray(batch)) continue;
     for (const entry of batch) {
@@ -28,7 +34,7 @@ export async function normalizeWordPress(siteSlug, options = {}) {
   }
 
   for (const [typeName, batch] of Object.entries(raw.types)) {
-    if (WP_TO_UNIVERSAL[typeName] || !Array.isArray(batch)) continue;
+    if (typeMapping[typeName] || !Array.isArray(batch)) continue;
     for (const entry of batch) {
       items.push(normalizeEntry(entry, 'custom', typeName));
     }
@@ -43,6 +49,7 @@ export async function normalizeWordPress(siteSlug, options = {}) {
       normalizedAt: new Date().toISOString(),
       sourceUrl: raw.meta?.sourceUrl,
       profile: profileId,
+      siteSlug: config.siteSlug,
       sampleLimits: raw.meta?.sampleLimits ?? null,
       itemCount: items.length,
     },
@@ -55,7 +62,7 @@ export async function normalizeWordPress(siteSlug, options = {}) {
   };
 
   await writeJson(paths.normalizedFile, payload);
-  return { paths, itemCount: items.length };
+  return { paths, config, itemCount: items.length };
 }
 
 function normalizeEntry(entry, kind, wpType) {
