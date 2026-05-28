@@ -11,11 +11,16 @@ This command initializes a generalized config and generates:
 - `output/<site>/wp-migration/site-config.json`
 - `output/<site>/wp-migration/run-full-migration.mjs`
 
+Use this only for initial setup/bootstrap when URL is required.
+
 ## Run full data migration
 
 ```bash
-node output/<site>/wp-migration/run-full-migration.mjs --import
+cd output/<site>/wp-migration
+node run-full-migration.mjs --import
 ```
+
+This is the project-specific rerun path and does not require passing the WordPress URL again.
 
 ## Engine code (generalized, root)
 
@@ -24,6 +29,12 @@ node output/<site>/wp-migration/run-full-migration.mjs --import
 ## Dynamic, per-site output
 
 - `output/<site>/wp-migration/*`
+
+## Entry and ownership model
+
+- Command-only entrypoint for initial run: `/wordpress-to-strapi <wordpress-url>`
+- Common/shared logic stays in `scripts/wp-migration/*`
+- Project-specific runtime and overrides stay in `output/<site>/wp-migration/*`
 
 ## Project-specific scripts (per-site)
 
