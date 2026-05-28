@@ -357,6 +357,28 @@ After the parity test run, you MUST ensure:
 - Run the workspace report generator (`npm run report`) to produce a timestamped PDF under:
   `output/<site>/test/reports/client-report-<timestamp>.pdf`
 
+### Final frontend likeness pass (required before final handoff)
+
+After Phase E quality gates pass, run one final **look-alike verification pass** against the original WordPress URL:
+
+1. Re-run Playwright suite on the generated frontend (`http://localhost:3000`) with unchanged approved tests from Phase B.
+2. Capture fresh screenshots for P0/P1 routes on the new frontend.
+3. Compare screenshots and visible text against legacy baseline artifacts:
+   - `output/<site>/test/exploratory/baseline/**/screenshot.png`
+   - `output/<site>/test/exploratory/baseline/**/text.txt`
+4. If major visual/content mismatch remains, return to Phase D refinement:
+   - fix component structure/styles
+   - fix CMS field mapping
+   - do **not** hardcode legacy copy into frontend files
+5. Regenerate reports:
+   - HTML Playwright report
+   - JUnit XML
+   - PDF report (`npm run report`)
+6. Update `output/<site>/docs/VISUAL-PARITY-REPORT.md` with final status:
+   - per-route `layout match`, `content match`, `screenshot parity`, `notes`
+
+Gate: project is not complete until final Playwright pass + screenshot comparison is documented and acceptable for P0 routes.
+
 ### ✋ CHECKPOINTs 3–4
 
 Use CHECKPOINTs 3–4 from `fullstack-builder` when Phase E runs.

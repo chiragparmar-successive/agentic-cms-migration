@@ -61,6 +61,17 @@ Before marking a page complete:
 
 Record results in `output/<site>/docs/FRONTEND-CMS-WIRING.md` (one row per route: adapter method, content type, pass/fail).
 
+### Best-practices enforcement (required)
+
+Generated frontend code must follow vendored Vercel/React skill packs and fail the step if these are violated:
+
+- RSC-first architecture (`'use client'` only where interaction is required)
+- No async waterfalls in server data fetching
+- Metadata sourced from CMS data
+- Image/font optimization (`next/image`, `next/font`)
+- No boolean-prop explosion; prefer composition patterns
+- No static marketing content as primary source (CMS is source of truth)
+
 ## Execution
 
 ### Step 0: Enforce Visual Reference Coverage (required)
@@ -191,6 +202,18 @@ After `npm run build` and with Next.js + Strapi running locally:
 ```
 
 Gate: **no route may ship with `CMS wired: no`** or `Content match: fail` on P0 routes.
+
+### Step 9: Playwright + screenshot likeness loop (required)
+
+Before leaving Phase D, run and iterate:
+
+1. Execute Playwright tests against generated frontend.
+2. Capture/refresh screenshots for P0/P1 routes.
+3. Compare with legacy baseline screenshots and text.
+4. Fix UI/layout/CMS mapping mismatches.
+5. Re-run tests and screenshot comparison until acceptable parity is reached for P0 routes.
+
+Do not bypass this loop by weakening assertions or hardcoding content.
 
 ## Output Contract
 
