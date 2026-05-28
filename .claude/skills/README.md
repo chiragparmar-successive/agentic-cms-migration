@@ -7,12 +7,14 @@ Skills are grouped by **phase** first, then by **skill name**. Entry point for e
 ```text
 .claude/skills/
   README.md
-  phase-a/                          # Reverse Engineering
+  common/
+    phases.md
+  PA-reverse-engineering/                          # Reverse Engineering
     site-crawler/SKILL.md
     wp-source-adapter/SKILL.md
     wp-ai-interpreter/SKILL.md
     content-model-inferencer/SKILL.md
-  phase-b/                          # Test-First Contract
+  PB-test/                          # Test-First Contract
     playwright-suite-generator/SKILL.md
     baseline-runner/SKILL.md
     playwright-test-lifecycle/SKILL.md
@@ -20,23 +22,23 @@ Skills are grouped by **phase** first, then by **skill name**. Entry point for e
     playwright-cli/SKILL.md
     playwright-pom/SKILL.md
 
-  phase-c/                          # CMS Provisioning
+  PC-cms/                          # CMS Provisioning
     strapi-schema-generator/SKILL.md
     strapi-bootstrapper/SKILL.md
     content-etl-pipeline/SKILL.md
     graphql-layer-validator/SKILL.md
-  phase-d/                          # Frontend Generation
+  PD-frontend/                          # Frontend Generation
     nextjs-scaffolder/SKILL.md
     cms-adapter-generator/SKILL.md
     page-component-generator/SKILL.md
     route-validator/SKILL.md
-  phase-e/                          # Quality Loop (Self-Healing)
+  PE-quality/                          # Quality Loop (Self-Healing)
     playwright-behavioral-parity/SKILL.md
     sonarqube-gate/SKILL.md
     lighthouse-ci-gate/SKILL.md
     ai-remediation-agent/SKILL.md
   orchestrators/
-    fullstack-builder/SKILL.md
+    url-to-strapi/SKILL.md
     wordpress-to-strapi/SKILL.md
   frontend/
     vercel/                         # read-only vendored packs (see skills-lock.json)
@@ -53,12 +55,16 @@ Skills are grouped by **phase** first, then by **skill name**. Entry point for e
 Phase A → CHECKPOINT 1 → Phase B → CHECKPOINT 2 → Phase C → Phase D → Phase E → CHECKPOINT 3 → (PASS → CHECKPOINT 4) / (FAIL → AI Remediation → retry)
 ```
 
+Canonical phase map:
+
+- `.claude/agents/common/phases.md`
+
 ## Design Principles
 
 - One clear responsibility per skill (one phase step).
 - Consider splitting past ~300–400 lines or when extraction + implementation + QA are mixed.
 - Orchestrators stay thin: coordinate child skills, verify contracts, report status.
-- Phase folders (`phase-a` through `phase-e`) keep skills aligned with the pipeline.
+- Phase folders (`PA-reverse-engineering` through `PE-quality`) keep skills aligned with the pipeline.
 - Keep vendor/framework guidance under `frontend/vercel/` so phase skills stay stable.
 - Human checkpoints (1–4) are non-negotiable gates; no skill may bypass them.
 

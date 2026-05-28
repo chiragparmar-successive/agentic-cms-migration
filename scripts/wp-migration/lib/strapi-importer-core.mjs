@@ -4,6 +4,7 @@ import { readJson, writeJson } from './utils.mjs';
 import { profilePaths } from './migration-profile.mjs';
 import { findByWpId, strapiRequest } from './strapi-client.mjs';
 import { loadSiteConfig, emptyIdMapFromConfig } from './site-config.mjs';
+import { runHook } from './hooks.mjs';
 
 async function upsertEntry(baseUrl, token, plural, wpId, payload, idMap, mapKey) {
   const existing = await findByWpId(baseUrl, token, plural, wpId);
@@ -78,6 +79,7 @@ export async function runStrapiImport(configOrSlug, options) {
       : configOrSlug;
 
   const { profileId, strapiUrl, strapiToken, skipCachedMedia = true } = options;
+  await runHook(config, 'preImport', { step: 'import', profileId, strapiUrl });
   const paths = profilePaths(config, profileId);
   const strapi = config.strapi;
 
@@ -242,6 +244,13 @@ export async function runStrapiImport(configOrSlug, options) {
 
   await writeJson(paths.idMapFile, idMap);
   await writeJson(paths.logFile, log);
+  await runHook(config, 'postImport', {
+    step: 'import',
+    profileId,
+    strapiUrl,
+    paths,
+    log,
+  });
 
   return { paths, log, config };
 }

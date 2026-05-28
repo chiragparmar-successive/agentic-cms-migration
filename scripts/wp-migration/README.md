@@ -24,3 +24,28 @@ node output/<site>/wp-migration/run-full-migration.mjs --import
 ## Dynamic, per-site output
 
 - `output/<site>/wp-migration/*`
+
+## Project-specific scripts (per-site)
+
+Keep shared engine code in `scripts/wp-migration/lib/*`, and put site-specific behavior in:
+
+- `output/<site>/wp-migration/scripts/*.mjs`
+
+Enable hooks via `output/<site>/wp-migration/site-config.json`:
+
+```json
+{
+  "hooks": {
+    "preNormalize": "scripts/pre-normalize.mjs",
+    "postImport": "scripts/post-import.mjs"
+  }
+}
+```
+
+Supported hooks:
+
+- `preExtract`, `postExtract`
+- `preNormalize`, `postNormalize`
+- `preImport`, `postImport`
+
+Each hook module must `default export` an async function.

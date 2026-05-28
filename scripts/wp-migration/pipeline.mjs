@@ -6,6 +6,7 @@ import { generateReviewMapping } from './lib/review.mjs';
 import { slugFromUrl } from './lib/utils.mjs';
 import { profileFromArgv } from './lib/sample-limits.mjs';
 import { initSiteConfig, loadSiteConfig } from './lib/site-config.mjs';
+import { runHook } from './lib/hooks.mjs';
 
 const VALID_STEPS = new Set(['extract', 'normalize', 'detect', 'review', 'all']);
 const argv = process.argv.slice(2);
@@ -33,10 +34,14 @@ async function main() {
 
   for (const s of steps) {
     if (s === 'extract') {
+      await runHook(config, 'preExtract', { step: 'extract', profileId });
       const result = await extractWordPress(config, { profile: profileId });
+      await runHook(config, 'postExtract', { step: 'extract', profileId, result });
       console.log('[extract] OK', result.paths.rawFile, result.counts);
     } else if (s === 'normalize') {
+      await runHook(config, 'preNormalize', { step: 'normalize', profileId });
       const result = await normalizeWordPress(config, { profile: profileId });
+      await runHook(config, 'postNormalize', { step: 'normalize', profileId, result });
       console.log('[normalize] OK', result.paths.normalizedFile, `items=${result.itemCount}`);
     } else if (s === 'detect') {
       if (profileId === 'full') { console.warn('[detect] skipped for full profile'); continue; }

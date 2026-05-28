@@ -1,68 +1,39 @@
 ---
-description: WordPress → Strapi full-stack partial E2E (default) — CMS + Playwright + Next.js + quality gates. Same Phase B/D/E as fullstack-builder.
+description: WordPress → Strapi full-stack partial E2E (default) — CMS + Playwright + Next.js + quality gates. Same Phase B/D/E as url-to-strapi.
 argument-hint: "<wordpress-url> [--cms-only] [--skip-tests] [--import]"
 ---
 
 ## `/wordpress-to-strapi`
 
-**Important:** Running only `wordpress-to-strapi.mjs` does **not** create the frontend. That script covers **Phase W (CMS)** only. With **no flags**, you must continue the orchestrator through **Phase B, D, and E** (same skills as `/fullstack-builder`).
+Run full end-to-end by default: CMS migration + frontend generation + Playwright execution + reports + quality gates.
 
-### Default (no flags) — same stack as fullstack
+This command is intentionally lightweight and acts as the command-level contract only.
+All phase/runtime details are canonicalized in:
 
-| Phase | What runs | Same as fullstack? |
-|-------|-----------|-------------------|
-| W | WP extract → model → schemas → Strapi bootstrap → preview import | WordPress-specific (replaces A+C) |
-| B | `.claude/commands/phase-b.md` on legacy WP URL | Yes |
-| D | `nextjs-scaffolder` → `cms-adapter-generator` → `page-component-generator` → `route-validator` | Yes |
-| E | `playwright-behavioral-parity`, `sonarqube-gate`, `lighthouse-ci-gate`, `ai-remediation-agent` | Yes |
+- `.claude/agents/wp-to-strapi/AGENT.md`
 
-Opt out: `--cms-only` (W only), `--skip-tests` (W + D + E).
+### Canonical entrypoint order
 
-### Phase W — scripts (agent runs these)
+1. Command contract: `.claude/commands/wordpress-to-strapi.md`
+2. Canonical agents map: `.claude/agents/wp-to-strapi/AGENT.md`
+3. Common phase index: `.claude/agents/common/phases.md`
 
-```bash
-SITE=wordpress-zcwowkggsk4k08cgsgwo4c8w-sakha-cloud
-WP_URL=https://wordpress-zcwowkggsk4k08cgsgwo4c8w.sakha.cloud/
+### Agent
 
-node scripts/wp-migration/wordpress-to-strapi.mjs "$SITE" "$WP_URL"
-# restart Strapi, then:
-STRAPI_URL=http://localhost:1337 STRAPI_API_TOKEN=<token> \
-  node scripts/wp-migration/wordpress-to-strapi.mjs "$SITE" "$WP_URL" --import
-```
-
-Creates under `output/<site>/`:
-
-- `wp-migration/` (preview data, analysis, `site-config.json`)
-- `cms/` (after `strapi-bootstrapper` + schema apply)
-- `run-full-migration.mjs` (full data later)
-
-**Do not stop here** if the user expected a frontend — proceed to Phase B/D/E below.
-
-### Phase D — frontend (orchestrator only)
-
-**CMS-powered:** All copy, images, SEO, and nav labels must come from Strapi via `cms` adapter — no hardcoded site content.
-
-**Look like original:** After generation, compare each P0 route against `wordpressUrl` (from `wp-migration/site-config.json`) vs `http://localhost:3000`; write `docs/VISUAL-PARITY-REPORT.md` and fix until layout/content match (without hardcoding copy).
-
-After WP-2 and CHECKPOINT 2 (if tests ran), run skills in order:
-
-1. `.claude/skills/phase-d/nextjs-scaffolder/SKILL.md` → `output/<site>/frontend/`
-2. `.claude/skills/phase-d/cms-adapter-generator/SKILL.md` → `docs/CMS-ADAPTER-COVERAGE.md`
-3. `.claude/skills/phase-d/page-component-generator/SKILL.md` → `docs/FRONTEND-CMS-WIRING.md` + visual compare vs original URL
-4. `.claude/skills/phase-d/route-validator/SKILL.md`
-
-Then: `npm run build`, Phase E parity tests, `npm run report` (PDF).
-
-### Skill
-
-- `.claude/skills/orchestrators/wordpress-to-strapi/SKILL.md`
+- `.claude/agents/wp-to-strapi/AGENT.md`
 
 ### Arguments
 
 `$ARGUMENTS` — WordPress URL; optional `--cms-only`, `--skip-tests`, `--import`.
 
-Site slug for this host: `wordpress-zcwowkggsk4k08cgsgwo4c8w-sakha-cloud`
+Site slug must be derived dynamically from the provided URL hostname (lowercase, dots replaced with `-`).
+Example: `https://example.com` → `example-com`
 
-If the URL is missing, stop and ask:
+### Flow and completion details
+
+- Phases, runtime script chain, outputs, and completion criteria:
+  `.claude/agents/wp-to-strapi/AGENT.md`
+
+If the URL is missing, stop and ask exactly:
 
 `/wordpress-to-strapi <wordpress-url>`

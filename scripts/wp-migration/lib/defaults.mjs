@@ -46,5 +46,14 @@ export function buildDefaultSiteConfig({ siteSlug, wordpressUrl, migrationDir })
       preview: { id: 'preview', sample: true, ownsContentModel: true },
       full: { id: 'full', sample: false, ownsContentModel: false },
     },
+    scriptsDir: 'scripts',
+    hooks: {
+      preExtract: null,
+      postExtract: null,
+      preNormalize: null,
+      postNormalize: null,
+      preImport: null,
+      postImport: null,
+    },
   };
 }

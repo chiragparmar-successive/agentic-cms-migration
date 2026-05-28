@@ -32,6 +32,7 @@ export async function loadSiteConfig(siteSlugOrDir) {
 export async function initSiteConfig({ siteSlug, wordpressUrl }) {
   const migrationDir = wpMigrationDir(siteSlug);
   await fs.mkdir(migrationDir, { recursive: true });
+  await fs.mkdir(path.join(migrationDir, 'scripts'), { recursive: true });
   const file = siteConfigPath(migrationDir);
 
   let config;
@@ -43,6 +44,15 @@ export async function initSiteConfig({ siteSlug, wordpressUrl }) {
   } catch {
     config = buildDefaultSiteConfig({ siteSlug, wordpressUrl, migrationDir });
   }
+
+  config.scriptsDir ??= 'scripts';
+  config.hooks ??= {};
+  config.hooks.preExtract ??= null;
+  config.hooks.postExtract ??= null;
+  config.hooks.preNormalize ??= null;
+  config.hooks.postNormalize ??= null;
+  config.hooks.preImport ??= null;
+  config.hooks.postImport ??= null;
 
   await writeJson(file, config);
   return config;
