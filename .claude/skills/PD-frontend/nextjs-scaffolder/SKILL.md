@@ -85,9 +85,7 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_SITE_NAME=
 NEXT_PUBLIC_SITE_TAGLINE=
 
-# --- WordPress data migration runner (optional; same stack as output/<site>/wp-migration) ---
-# STRAPI_URL=http://localhost:<cms-port>
-# Used when running: node run-full-migration.mjs (default import)
+# STRAPI_URL=http://localhost:<cms-port>  # optional; Phase C content-etl-pipeline
 ```
 
 #### `.env.local` (gitignored, filled with real values)

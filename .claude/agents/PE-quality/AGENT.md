@@ -41,7 +41,8 @@ node scripts/quality/visual-parity-check.mjs <site-slug>
 
 1. Captures **legacy** (WordPress `wordpressUrl`) and **new** (Next.js) full-page screenshots per route.
 2. Compares visible text + baseline `text.txt` where available.
-3. Writes `output/<site>/docs/VISUAL-PARITY-REPORT.md` and `test/reports/visual-parity.json`.
+3. Prints **emoji logs** per route (`📸` capture, `🔍` compare, `✅`/`❌` pass/fail, `🚦` gate) to console and `test/reports/visual-parity-run.log`.
+4. Writes `output/<site>/docs/VISUAL-PARITY-REPORT.md` and `test/reports/visual-parity.json`.
 
 **If the gate fails (exit 1):**
 

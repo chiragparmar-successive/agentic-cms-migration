@@ -16,9 +16,32 @@ Phase: **E — Quality Loop** (Gate 0 — run before or with Playwright parity)
 | Path | Role |
 |------|------|
 | `scripts/quality/visual-parity-check.mjs` | Shared checker (screenshots + text similarity) |
+| `scripts/lib/emoji-logger.mjs` | Shared **emoji logger** (console + file) |
 | `output/<site>/test/reports/visual-parity/` | Per-route `legacy.png` / `new.png` |
+| `output/<site>/test/reports/visual-parity-run.log` | Full emoji text log (timestamps) |
 | `output/<site>/docs/VISUAL-PARITY-REPORT.md` | Human-readable gate report |
 | `output/<site>/test/reports/visual-parity.json` | Machine-readable results for remediation |
+
+## Emoji logging (required)
+
+Quality scripts use the same emoji convention on **console** and in **log files**:
+
+| Emoji | Meaning | Example line |
+|-------|---------|----------------|
+| ✅ | Success / pass | `✅ route / — layout pass \| cms yes` |
+| ❌ | Failure / gate fail | `❌ route /blog — content mismatch` |
+| ⏭️ | Skipped | optional steps |
+| ⚠️ | Warning | retry hint, partial match |
+| ℹ️ | Info | URLs, paths, artifact locations |
+| 📸 | Screenshot capture | `📸 capturing legacy → …` |
+| 🔍 | Text/compare step | `🔍 compare / — text 62%` |
+| 🚦 | Gate result | `🚦 gate PASSED` |
+
+Agents must **preserve these emojis** when adding logs to custom hooks or remediation scripts.
+
+Log files:
+
+- Visual parity: `output/<site>/test/reports/visual-parity-run.log`
 
 ## Preconditions
 
@@ -39,7 +62,9 @@ npx playwright install chromium
 node scripts/quality/visual-parity-check.mjs <site-slug>
 ```
 
-Exit `0` = gate passed. Exit `1` = at least one route failed — enter remediation (Step 2).
+Exit `0` = gate passed (`🚦 gate PASSED` in console). Exit `1` = at least one route failed (`❌`) — enter remediation (Step 2).
+
+Review the full emoji log at `output/<site>/test/reports/visual-parity-run.log`.
 
 ## Step 2 — Triage failures
 

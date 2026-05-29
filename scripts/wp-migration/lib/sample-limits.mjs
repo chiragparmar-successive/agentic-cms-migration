@@ -9,8 +9,7 @@ export const SAMPLE_LIMITS = {
   customType: 3,
 };
 
-/** @returns {'preview' | 'full'} */
-export function profileFromArgv(argv = process.argv) {
-  if (argv.includes('--full')) return 'full';
+/** @returns {'preview'} */
+export function profileFromArgv() {
   return 'preview';
 }

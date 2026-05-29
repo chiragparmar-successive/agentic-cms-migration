@@ -11,14 +11,14 @@ export const DEFAULT_WORDPRESS = {
 
 export const DEFAULT_STRAPI = {
   taxonomies: {
-    category: { api: 'categories', idMapKey: 'category' },
-    tag: { api: 'tags', idMapKey: 'tag' },
+    category: { api: 'categories' },
+    tag: { api: 'tags' },
   },
-  authors: { api: 'authors', idMapKey: 'author' },
-  media: { idMapKey: 'media' },
+  authors: { api: 'authors' },
+  media: {},
   contentTypes: [
-    { kind: 'article', strapiApi: 'articles', idMapKey: 'article', import: true },
-    { kind: 'page', strapiApi: 'pages', idMapKey: 'page', import: true },
+    { kind: 'article', strapiApi: 'articles' },
+    { kind: 'page', strapiApi: 'pages' },
   ],
 };
 
@@ -44,7 +44,6 @@ export function buildDefaultSiteConfig({ siteSlug, wordpressUrl, migrationDir })
     sampleLimits: { ...DEFAULT_SAMPLE_LIMITS },
     profiles: {
       preview: { id: 'preview', sample: true, ownsContentModel: true },
-      full: { id: 'full', sample: false, ownsContentModel: false },
     },
     scriptsDir: 'scripts',
     hooks: {
@@ -52,8 +51,6 @@ export function buildDefaultSiteConfig({ siteSlug, wordpressUrl, migrationDir })
       postExtract: null,
       preNormalize: null,
       postNormalize: null,
-      preImport: null,
-      postImport: null,
     },
   };
 }

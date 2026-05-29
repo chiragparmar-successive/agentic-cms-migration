@@ -1,22 +1,27 @@
 /**
- * Structured console + file logging for WP → Strapi data migration.
+ * Structured console + file logging (emoji) for quality and analysis scripts.
  */
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-const ICON = {
+export const LOG_ICONS = {
   ok: '✅',
   fail: '❌',
   skip: '⏭️',
   warn: '⚠️',
   info: 'ℹ️',
+  shot: '📸',
+  compare: '🔍',
+  gate: '🚦',
 };
+
+const ICON = LOG_ICONS;
 
 /**
  * @param {string} prefix
  * @param {{ logFile?: string }} [options]
  */
-export function createMigrationLogger(prefix = '[wp-migration]', options = {}) {
+export function createEmojiLogger(prefix = '[script]', options = {}) {
   const stats = { ok: 0, fail: 0, skip: 0 };
   const buffer = [];
   const { logFile } = options;
@@ -68,6 +73,10 @@ export function createMigrationLogger(prefix = '[wp-migration]', options = {}) {
       line(ICON.info, message);
     },
 
+    emoji(icon, message, level = 'log') {
+      capture(level, `${prefix} ${icon} ${message}`);
+    },
+
     warn(message) {
       capture('warn', `${prefix} ${ICON.warn} ${message}`);
     },
@@ -90,24 +99,6 @@ export function createMigrationLogger(prefix = '[wp-migration]', options = {}) {
       line(ICON.skip, `${entity} ${label} — ${reason}`);
     },
 
-    upsert(entity, label, action, detail = '') {
-      const icon = action === 'failed' ? ICON.fail : ICON.ok;
-      if (action === 'failed') stats.fail += 1;
-      else if (action === 'skipped') stats.skip += 1;
-      else stats.ok += 1;
-      const verb =
-        action === 'created'
-          ? 'created'
-          : action === 'updated'
-            ? 'updated'
-            : action === 'skipped'
-              ? 'skipped'
-              : action;
-      const extra = detail ? ` — ${detail}` : '';
-      const out = `${prefix} ${icon} ${entity} ${label} (${verb})${extra}`;
-      capture(action === 'failed' ? 'error' : 'log', out);
-    },
-
     summary(rows) {
       capture('log', '');
       capture('log', `${prefix} ${'─'.repeat(56)}`);
@@ -117,7 +108,7 @@ export function createMigrationLogger(prefix = '[wp-migration]', options = {}) {
       }
       capture(
         'log',
-        `${prefix}   transfers: ${ICON.ok} ${stats.ok} ok | ${ICON.fail} ${stats.fail} failed | ${ICON.skip} ${stats.skip} skipped`
+        `${prefix}   results: ${ICON.ok} ${stats.ok} ok | ${ICON.fail} ${stats.fail} failed | ${ICON.skip} ${stats.skip} skipped`
       );
       capture('log', `${prefix} ${'─'.repeat(56)}`);
     },

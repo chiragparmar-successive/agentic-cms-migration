@@ -9,19 +9,13 @@ export const PROFILES = {
     sample: true,
     ownsContentModel: true,
   },
-  full: {
-    id: 'full',
-    label: 'full',
-    sample: false,
-    ownsContentModel: false,
-  },
 };
 
 export function resolveProfile(profileId, config) {
   const fromConfig = config?.profiles?.[profileId];
   const fallback = PROFILES[profileId];
   if (!fallback && !fromConfig) {
-    throw new Error(`Unknown migration profile "${profileId}". Use "preview" or "full".`);
+    throw new Error(`Unknown migration profile "${profileId}". Use "preview".`);
   }
   return { ...fallback, ...fromConfig, id: profileId };
 }
@@ -57,11 +51,6 @@ export function profilePaths(siteSlugOrConfig, profileId) {
     rawFile: path.join(base, 'raw/wp-export.json'),
     normalizedDir: path.join(base, 'normalized'),
     normalizedFile: path.join(base, 'normalized/content.json'),
-    syncDir: path.join(base, 'sync'),
-    idMapFile: path.join(base, 'sync/id-map.json'),
-    logFile: path.join(base, 'sync/import-log.json'),
-    failedFile: path.join(base, 'sync/failed-imports.json'),
-    runLogFile: path.join(base, 'sync/migration-run.log'),
     analysisDir: path.join(root, 'analysis'),
     structureAnalysisFile: path.join(root, 'analysis/structure-analysis.json'),
     unknownBlocksFile: path.join(root, 'analysis/unknown-blocks.json'),

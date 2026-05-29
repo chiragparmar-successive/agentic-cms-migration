@@ -7,9 +7,11 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+import { createEmojiLogger } from '../lib/emoji-logger.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.join(__dirname, '../..');
+const LOG_PREFIX = '[visual-parity]';
 
 function slugifyRoute(route) {
   if (route === '/' || route === '') return 'home';
@@ -93,18 +95,26 @@ export async function runVisualParityCheck(siteSlug) {
   const reportDir = path.join(siteDir, 'test/reports/visual-parity');
   const outJson = path.join(siteDir, 'test/reports/visual-parity.json');
   const outMd = path.join(siteDir, 'docs/VISUAL-PARITY-REPORT.md');
+  const runLogFile = path.join(siteDir, 'test/reports/visual-parity-run.log');
+
+  const logger = createEmojiLogger(LOG_PREFIX, { logFile: runLogFile });
+  await logger.beginRun(`visual parity — ${siteSlug}`);
 
   await fs.mkdir(reportDir, { recursive: true });
   await fs.mkdir(path.dirname(outMd), { recursive: true });
+
+  logger.banner(`Visual parity — ${siteSlug}`);
+  logger.info(`legacy: ${legacyBase}`);
+  logger.info(`new:    ${newBase}`);
+  logger.info(`routes: ${routes.length}`);
+  logger.info(`run log: ${runLogFile}`);
 
   const browser = await chromium.launch({ headless: true });
   const results = [];
   let passed = true;
 
-  console.log('[visual-parity] legacy:', legacyBase);
-  console.log('[visual-parity] new:    ', newBase);
-
-  for (const route of routes) {
+  for (let i = 0; i < routes.length; i += 1) {
+    const route = routes[i];
     const slug = slugifyRoute(route);
     const routeDir = path.join(reportDir, slug);
     await fs.mkdir(routeDir, { recursive: true });
@@ -112,19 +122,26 @@ export async function runVisualParityCheck(siteSlug) {
     const legacyUrl = `${legacyBase}${route.startsWith('/') ? route : `/${route}`}`;
     const newUrl = `${newBase}${route.startsWith('/') ? route : `/${route}`}`;
 
-    console.log(`[visual-parity] 📸 ${route}`);
+    logger.step(i + 1, routes.length, route);
+    logger.emoji('📸', `capturing legacy → ${legacyUrl}`);
 
     let legacyCap;
     let newCap;
     try {
       legacyCap = await capturePage(browser, legacyUrl, routeDir, 'legacy');
+      logger.ok('screenshot', `legacy ${route}`, legacyCap.screenshotPath);
     } catch (err) {
       legacyCap = { error: err.message };
+      logger.fail('screenshot', `legacy ${route}`, err.message);
     }
+
+    logger.emoji('📸', `capturing new → ${newUrl}`);
     try {
       newCap = await capturePage(browser, newUrl, routeDir, 'new');
+      logger.ok('screenshot', `new ${route}`, newCap.screenshotPath);
     } catch (err) {
       newCap = { error: err.message };
+      logger.fail('screenshot', `new ${route}`, err.message);
     }
 
     const baselineTextFile = path.join(
@@ -161,10 +178,19 @@ export async function runVisualParityCheck(siteSlug) {
     const routePass = contentMatch && layoutMatch && cmsWired;
     if (!routePass) passed = false;
 
-    const status = routePass ? '✅ pass' : '❌ fail';
-    console.log(
-      `[visual-parity] ${status} ${route} — sim ${(similarity * 100).toFixed(0)}% baseline ${(baselineSim * 100).toFixed(0)}%`
-    );
+    logger.emoji('🔍', `compare ${route} — text ${(similarity * 100).toFixed(0)}% | baseline ${(baselineSim * 100).toFixed(0)}%`);
+
+    if (routePass) {
+      logger.ok('route', route, `layout ${layoutMatch ? 'pass' : 'partial'} | cms ${cmsWired ? 'yes' : 'no'}`);
+    } else {
+      const reasons = [];
+      if (legacyCap.error) reasons.push(`legacy: ${legacyCap.error}`);
+      if (newCap.error) reasons.push(`new: ${newCap.error}`);
+      if (!cmsWired) reasons.push('cms not wired');
+      if (!contentMatch) reasons.push('content mismatch');
+      if (!layoutMatch) reasons.push('layout mismatch');
+      logger.fail('route', route, reasons.join('; ') || 'parity check failed');
+    }
 
     results.push({
       route,
@@ -196,6 +222,7 @@ export async function runVisualParityCheck(siteSlug) {
     newBase,
     passed,
     routes: results,
+    runLogFile,
     remediationSkill:
       '.claude/skills/PE-quality/frontend-visual-parity/SKILL.md',
   };
@@ -205,7 +232,7 @@ export async function runVisualParityCheck(siteSlug) {
   const mdRows = results
     .map(
       (r) =>
-        `| ${r.route} | ${r.legacyUrl} | ${r.newUrl} | ${r.cmsWired ? 'yes' : 'no'} | ${r.layoutMatch} | ${r.contentMatch} | ${r.passed ? 'pass' : '**FAIL**'} | ${(r.textSimilarity * 100).toFixed(0)}% |`
+        `| ${r.route} | ${r.legacyUrl} | ${r.newUrl} | ${r.cmsWired ? 'yes' : 'no'} | ${r.layoutMatch} | ${r.contentMatch} | ${r.passed ? '✅ pass' : '❌ fail'} | ${(r.textSimilarity * 100).toFixed(0)}% |`
     )
     .join('\n');
 
@@ -228,6 +255,10 @@ ${results
   )
   .join('\n')}
 
+## Logs
+
+- Text log (emoji): \`${runLogFile}\`
+
 ## If failed
 
 1. Open legacy + new screenshots side by side.
@@ -237,15 +268,33 @@ ${results
 
   await fs.writeFile(outMd, md);
 
-  return { passed, report, paths: { reportDir, outJson, outMd } };
+  logger.summary([
+    ['routes checked', routes.length],
+    ['passed', results.filter((r) => r.passed).length],
+    ['failed', results.filter((r) => !r.passed).length],
+    ['report', outMd],
+    ['json', outJson],
+  ]);
+
+  if (passed) {
+    logger.emoji('🚦', 'gate PASSED — frontend look-alike check ok');
+  } else {
+    logger.fail('gate', 'visual parity', 'one or more routes failed — fix and re-run');
+  }
+
+  await logger.flush();
+
+  return { passed, report, paths: { reportDir, outJson, outMd, runLogFile } };
 }
 
 const siteSlug = process.argv[2];
 if (!siteSlug) {
-  console.error('Usage: node scripts/quality/visual-parity-check.mjs <site-slug>');
+  console.error('❌ Usage: node scripts/quality/visual-parity-check.mjs <site-slug>');
   process.exit(1);
 }
 
 const { passed, paths } = await runVisualParityCheck(siteSlug);
-console.log(`[visual-parity] report: ${paths.outMd}`);
+const tailLogger = createEmojiLogger(LOG_PREFIX);
+tailLogger.info(`report: ${paths.outMd}`);
+tailLogger.info(`run log: ${paths.runLogFile}`);
 if (!passed) process.exit(1);

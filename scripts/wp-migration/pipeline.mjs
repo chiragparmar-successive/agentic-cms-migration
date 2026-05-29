@@ -16,7 +16,7 @@ const step = stepArg && VALID_STEPS.has(stepArg) ? stepArg : 'all';
 const profileId = profileFromArgv();
 
 if (!wpUrl) {
-  console.error('Usage: node scripts/wp-migration/pipeline.mjs <site-slug> <wordpress-url> [extract|normalize|detect|review|all] [--preview|--full]');
+  console.error('Usage: node scripts/wp-migration/pipeline.mjs <site-slug> <wordpress-url> [extract|normalize|detect|review|all]');
   process.exit(1);
 }
 
@@ -27,10 +27,7 @@ async function main() {
   const config = await loadSiteConfig(siteSlug);
   console.log(`[pipeline] profile: ${profileId}`);
 
-  const defaultSteps = profileId === 'full'
-    ? ['extract', 'normalize']
-    : ['extract', 'normalize', 'detect', 'review'];
-  const steps = step === 'all' ? defaultSteps : [step];
+  const steps = step === 'all' ? ['extract', 'normalize', 'detect', 'review'] : [step];
 
   for (const s of steps) {
     if (s === 'extract') {
@@ -44,11 +41,9 @@ async function main() {
       await runHook(config, 'postNormalize', { step: 'normalize', profileId, result });
       console.log('[normalize] OK', result.paths.normalizedFile, `items=${result.itemCount}`);
     } else if (s === 'detect') {
-      if (profileId === 'full') { console.warn('[detect] skipped for full profile'); continue; }
       const result = await detectStructure(config, { profile: profileId });
       console.log('[detect] OK', result.analysisPath, `unknown=${result.unknownCount}`);
     } else if (s === 'review') {
-      if (profileId === 'full') { console.warn('[review] skipped for full profile'); continue; }
       const result = await generateReviewMapping(config, { profile: profileId });
       console.log('[review] OK', result.mappingPath, result.markdownPath);
     } else {

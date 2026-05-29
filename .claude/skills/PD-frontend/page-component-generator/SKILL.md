@@ -58,7 +58,7 @@ Before marking a page complete:
 
 1. Remove or grep for forbidden patterns: no large string literals that mirror site copy
 2. Confirm the page breaks or shows empty state if Strapi is down / entry missing (proves CMS dependency)
-3. Confirm rendered text matches Strapi preview import for that route (same slug/title/body)
+3. Confirm rendered text matches Strapi content (ETL) for that route (same slug/title/body)
 
 Record results in `output/<site>/docs/FRONTEND-CMS-WIRING.md` (one row per route: adapter method, content type, pass/fail).
 
