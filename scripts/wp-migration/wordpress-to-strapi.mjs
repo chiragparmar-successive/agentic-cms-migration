@@ -82,13 +82,13 @@ ${formatOrchestratorPlan(flags)}
       `  Restart Strapi, then: node scripts/wp-migration/wordpress-to-strapi.mjs ${siteSlug} ${wpUrl} --import`,
     );
     console.log(
-      `  Full data later: node output/${siteSlug}/wp-migration/run-full-migration.mjs --import`,
+      `  Full data later: node output/${siteSlug}/wp-migration/run-full-migration.mjs`,
     );
     printPostWInstructions(siteSlug, flags);
     return;
   }
 
-  requireStrapiEnv();
+  await requireStrapiEnv({ migrationDir: wpMigrationDir(siteSlug) });
   await runNode(importPreview, [siteSlug]);
   console.log(`${LOG} Preview import complete (Phase W).`);
   printPostWInstructions(siteSlug, flags);

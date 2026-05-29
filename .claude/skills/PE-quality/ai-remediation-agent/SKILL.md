@@ -14,6 +14,7 @@ Automatically diagnose and fix quality gate failures through AI-generated file p
 ## Precondition
 
 - CHECKPOINT 3 failed — one or more quality gates did not pass:
+  - **Frontend visual parity** (screenshots/content not look-alike)
   - Playwright behavioral parity regressions
   - SonarQube quality gate failures
   - Lighthouse CI performance gate failures
@@ -26,6 +27,7 @@ MAX_ITERATIONS = 5
 
 while iteration < MAX_ITERATIONS:
     // 1. Run all quality gates
+    visual_result = run frontend-visual-parity
     playwright_result = run playwright-behavioral-parity
     sonarqube_result = run sonarqube-gate
     lighthouse_result = run lighthouse-ci-gate
@@ -52,7 +54,9 @@ if iteration == MAX_ITERATIONS and failures remain:
 
 ### Step 1: Collect Failure Reports
 
-Read from `output/<site>/reports/`:
+Read from `output/<site>/reports/` and docs:
+- `docs/VISUAL-PARITY-REPORT.md` + `test/reports/visual-parity.json` — look-alike failures
+- `test/reports/visual-parity/*/legacy.png` + `new.png` — screenshot pairs
 - `behavioral-parity.md` — Playwright regression list
 - `sonarqube-gate.md` — Code quality issues
 - `lighthouse-gate.md` — Performance issues
@@ -61,6 +65,9 @@ Read from `output/<site>/reports/`:
 
 | Source | Category | Examples | Typical Fix |
 |---|---|---|---|
+| Visual | `visual-layout` | Nav/hero/footer wrong vs legacy screenshot | Fix layout.tsx, header/footer components |
+| Visual | `visual-content` | H1/body mismatch vs legacy text | CMS mapping + typography, not static copy |
+| Visual | `visual-cms-slot` | Data present but wrong region | Remap adapter fields to component slots |
 | Playwright | `locator` | Selector doesn't match | Update component class/role |
 | Playwright | `timing` | Element loads too slow | Add loading state, increase timeout |
 | Playwright | `data-mismatch` | CMS content differs | Fix ETL mapping or CMS seed |
@@ -88,10 +95,11 @@ For each failure, use Claude API tool-use to:
 4. Validate the patch doesn't break existing passing tests
 
 Patch strategy — fix in this priority order:
-1. **Data fixes** — CMS content mismatches (fix in ETL or seed)
-2. **Code fixes** — Bugs, vulnerabilities, missing attributes
-3. **Performance fixes** — Image optimisation, code splitting, caching
-4. **Style fixes** — Layout, accessibility, SEO metadata
+1. **Visual parity** — layout/chrome/CMS slots to match legacy screenshots (`frontend-visual-parity` skill)
+2. **Data fixes** — CMS content mismatches (fix in ETL or seed)
+3. **Code fixes** — Bugs, vulnerabilities, missing attributes
+4. **Performance fixes** — Image optimisation, code splitting, caching
+5. **Style fixes** — Layout, accessibility, SEO metadata
 
 Data integrity requirement:
 
@@ -108,10 +116,11 @@ Apply each patch to the source file. Track:
 ### Step 5: Re-run Quality Gates
 
 After applying all patches for this iteration:
-1. Re-run Playwright behavioral parity
-2. Re-run SonarQube gate
-3. Re-run Lighthouse CI gate
-4. Compare results with previous iteration
+1. Re-run `node scripts/quality/visual-parity-check.mjs <site-slug>`
+2. Re-run Playwright behavioral parity
+3. Re-run SonarQube gate
+4. Re-run Lighthouse CI gate
+5. Compare results with previous iteration
 
 ### Step 6: Iteration Reporting
 

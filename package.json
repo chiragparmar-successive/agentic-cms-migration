@@ -4,11 +4,13 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "report": "node scripts/generate-report.mjs"
+    "report": "node scripts/generate-report.mjs",
+    "visual-parity": "node scripts/quality/visual-parity-check.mjs"
   },
   "devDependencies": {
     "@anthropic-ai/claude-code": "^2.1.152",
     "@playwright/test": "^1.44.0",
+    "playwright": "^1.44.0",
     "fast-xml-parser": "^4.3.0"
   }
 }

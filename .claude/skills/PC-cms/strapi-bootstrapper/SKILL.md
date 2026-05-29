@@ -91,6 +91,20 @@ export default ({ env }) => ({
 Create `.env` with auto-generated keys.
 If port 1337 is occupied, use an alternative and update all references.
 
+After first admin user is created (UI registration or bootstrap script), sync runtime values into frontend env:
+
+1. Update `output/<site>/frontend/.env.local` (create from `.env.local.example` if missing)
+2. Set `STRAPI_GRAPHQL_URL`, `STRAPI_REST_URL`, and `STRAPI_URL` to the actual CMS port
+3. Add **commented** admin reference lines for local visibility:
+
+```env
+# STRAPI_ADMIN_EMAIL=<email-used-at-bootstrap>
+# STRAPI_ADMIN_PASSWORD=<password-used-at-bootstrap>
+# STRAPI_ADMIN_URL=http://localhost:<port>/admin
+```
+
+4. Write the same summary to `output/<site>/docs/FRONTEND-ENV.md` (no secrets in git — use commented placeholders in example files only)
+
 ### Step 7: Roles & Permissions
 
 Configure public read access for all content types:
@@ -119,7 +133,7 @@ Verify:
 - CMS running with all content types
 - Admin URL, API URL, GraphQL URL
 - Build/run status
-- Environment variables documented in `.env.example`
+- CMS `.env` documented; frontend `.env.local.example` + `FRONTEND-ENV.md` synced with URLs and commented admin placeholders
 
 ## Downstream
 

@@ -18,6 +18,11 @@ Generate a type-safe CMS data access layer that decouples the frontend from the 
 - Next.js project scaffolded (from `nextjs-scaffolder`)
 - GraphQL types generated (from `graphql-layer-validator`)
 - Strapi running with content (from Phase C)
+- `output/<site>/frontend/.env.local` exists with at least:
+  - `STRAPI_GRAPHQL_URL`
+  - `STRAPI_REST_URL` (if REST/media helpers are used)
+  - `STRAPI_API_TOKEN` (when content requires auth)
+  - commented `STRAPI_ADMIN_EMAIL` / `STRAPI_ADMIN_PASSWORD` lines for local reference
 
 ## Execution
 
@@ -59,16 +64,21 @@ Create `src/lib/cms/strapi.ts`:
 import type { ICMSAdapter, QueryParams } from './adapter';
 
 export class StrapiAdapter implements ICMSAdapter {
-  private baseUrl: string;
+  private graphqlUrl: string;
+  private restBase: string;
   private token?: string;
 
   constructor() {
-    this.baseUrl = process.env.NEXT_PUBLIC_STRAPI_URL ?? 'http://localhost:1337';
+    this.graphqlUrl =
+      process.env.STRAPI_GRAPHQL_URL ?? 'http://localhost:1337/graphql';
+    this.restBase = process.env.STRAPI_REST_URL ?? 'http://localhost:1337/api';
     this.token = process.env.STRAPI_API_TOKEN;
   }
 
-  private async fetch<T>(endpoint: string, params?: QueryParams): Promise<T> {
-    const url = new URL(`/api${endpoint}`, this.baseUrl);
+  // Prefer GraphQL for content reads; use REST only when required (e.g. uploads).
+
+  private async fetchRest<T>(endpoint: string, params?: QueryParams): Promise<T> {
+    const url = new URL(endpoint, this.restBase.endsWith('/') ? this.restBase : `${this.restBase}/`);
     // Add query params...
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -111,6 +121,18 @@ export type { BlogPost as Post } from '@/generated/graphql';
 export type { TeamMember } from '@/generated/graphql';
 // ...
 ```
+
+### Step 3.5: Env contract verification (required)
+
+Before implementation:
+
+1. Read `output/<site>/frontend/.env.local` — all CMS URLs/tokens must come from env.
+2. Ensure adapter reads **only**:
+   - `STRAPI_GRAPHQL_URL` (primary)
+   - `STRAPI_REST_URL` (optional REST/media)
+   - `STRAPI_API_TOKEN` (server-side)
+3. Do **not** read `STRAPI_ADMIN_EMAIL` / `STRAPI_ADMIN_PASSWORD` in runtime code — those are commented reference lines for developers only.
+4. If env is missing, copy from `.env.local.example` and fill from Phase C bootstrap output.
 
 ### Step 4: Wire Into App
 
@@ -174,6 +196,7 @@ The `ICMSAdapter` interface enables:
 - TypeScript compiles with zero errors
 - All Strapi content types used on the site have a corresponding adapter method (no orphan types)
 - Dynamic-data verification passed (no static primary content)
+- Adapter uses env-driven `STRAPI_GRAPHQL_URL` / `STRAPI_REST_URL` (no hardcoded localhost in source)
 
 ## Downstream
 

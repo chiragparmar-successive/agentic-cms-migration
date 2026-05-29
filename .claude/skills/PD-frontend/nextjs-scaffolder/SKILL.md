@@ -49,16 +49,72 @@ Update `tsconfig.json`:
 }
 ```
 
-### Step 3: Environment Configuration
+### Step 3: Environment Configuration (required)
 
-Create `.env.local`:
+Create **both** files under `output/<site>/frontend/`:
+
+1. `.env.local.example` — committed template (commented placeholders for humans/agents)
+2. `.env.local` — local runtime values (gitignored; copy from example and fill after Phase C)
+
+Use the **actual CMS port** from Phase C bootstrap — never assume `1337` without checking.
+
+#### `.env.local.example` (committed)
 
 ```env
-NEXT_PUBLIC_STRAPI_URL=http://localhost:<port>
-STRAPI_API_TOKEN=<token>
+# =============================================================================
+# Frontend local environment (copy to .env.local)
+# Generated/updated during Phase C (Strapi bootstrap) + Phase D (frontend).
+# =============================================================================
+
+# --- Strapi API (server-side; never prefix with NEXT_PUBLIC_) ---
+# GraphQL endpoint used by src/lib/cms/strapi-adapter.ts
+STRAPI_GRAPHQL_URL=http://localhost:<cms-port>/graphql
+# REST base used for media/upload helpers (optional)
+STRAPI_REST_URL=http://localhost:<cms-port>/api
+# API token: Strapi Admin → Settings → API Tokens → Create (Full access or scoped)
+STRAPI_API_TOKEN=
+
+# --- Strapi admin (local dev reference only — comment out in shared repos) ---
+# Fill from first Strapi `npm run develop` registration OR bootstrap output:
+# STRAPI_ADMIN_EMAIL=admin@example.com
+# STRAPI_ADMIN_PASSWORD=your-generated-password
+# STRAPI_ADMIN_URL=http://localhost:<cms-port>/admin
+
+# --- Public site (safe for browser; NEXT_PUBLIC_*) ---
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_SITE_NAME=
+NEXT_PUBLIC_SITE_TAGLINE=
+
+# --- WordPress data migration runner (optional; same stack as output/<site>/wp-migration) ---
+# STRAPI_URL=http://localhost:<cms-port>
+# Used when running: node run-full-migration.mjs (default import)
 ```
 
-Use the actual CMS port from Phase C — never hardcode.
+#### `.env.local` (gitignored, filled with real values)
+
+After Strapi bootstrap, write **actual** values into `.env.local` and keep **commented copies** of admin credentials on adjacent lines so developers can see them without opening Strapi admin:
+
+```env
+STRAPI_GRAPHQL_URL=http://localhost:1337/graphql
+STRAPI_REST_URL=http://localhost:1337/api
+STRAPI_API_TOKEN=<paste-token-here>
+
+# Admin login (local only — from Strapi first-run / bootstrap)
+# STRAPI_ADMIN_EMAIL=admin@example.com
+# STRAPI_ADMIN_PASSWORD=Abcd1234!Generated
+# STRAPI_ADMIN_URL=http://localhost:1337/admin
+
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_SITE_NAME=My Site
+NEXT_PUBLIC_SITE_TAGLINE=From approved content model
+```
+
+Rules:
+
+- Store **base URLs**, **GraphQL URL**, **API token**, and **site identity** in env — never hardcode in components.
+- Store **Strapi admin email/password as commented lines** in `.env.local` for local visibility (do not commit real passwords to `.env.local.example`).
+- Add `frontend/.env.local` to `.gitignore` if not already present.
+- Document the same keys in `output/<site>/docs/FRONTEND-ENV.md` with CMS admin URL, GraphQL URL, and frontend dev URL.
 
 ### Step 4: Project Structure (CMS API best-practice)
 
@@ -129,7 +185,9 @@ npm run build
 - TypeScript strict mode enabled
 - Tailwind configured
 - App Router + RSC defaults
-- Environment variables documented
+- `.env.local.example` committed with commented Strapi admin + API placeholders
+- `.env.local` created locally with real URLs/token (admin creds commented for visibility)
+- `output/<site>/docs/FRONTEND-ENV.md` documents runtime URLs and env keys
 
 ## Downstream
 

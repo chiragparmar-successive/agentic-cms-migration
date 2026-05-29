@@ -5,7 +5,7 @@ argument-hint: "<wordpress-url> [--cms-only] [--skip-tests] [--import]"
 
 ## `/wordpress-to-strapi`
 
-Run full end-to-end by default: CMS migration + frontend generation + Playwright execution + reports + quality gates.
+Run full end-to-end by default: schema/CMS setup first, then frontend + quality phases, then full data migration at the end.
 This is the only canonical entrypoint for initial project bootstrapping.
 
 This command is intentionally lightweight and acts as the command-level contract only.
@@ -45,9 +45,9 @@ If the URL is missing, stop and ask exactly:
    Use this command with URL:
    - `/wordpress-to-strapi <wordpress-url>`
 2. **Follow-up data migration (project-specific runner)**  
-   After initial run completes, use generated script from output (no URL required):
+   Data migration runs from generated script in output (no URL required):
    - `cd output/<site>/wp-migration`
-   - `node run-full-migration.mjs --import`
+   - `node run-full-migration.mjs` (default: upsert + `✅`/`❌` logs + verify; artifacts in `full/sync/`)
 
 Command requirement:
 

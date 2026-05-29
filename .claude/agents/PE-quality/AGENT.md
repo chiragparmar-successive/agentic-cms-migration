@@ -1,5 +1,5 @@
 ---
-description: "Phase E — Quality Loop: Run the approved Playwright behavioral parity suite, SonarQube code quality gate, and Lighthouse CI performance gate against the new stack, with AI self-healing up to 5 iterations before escalating."
+description: "Phase E — Quality Loop: Frontend look-alike gate (screenshots + content), Playwright parity, SonarQube, Lighthouse CI, with AI self-healing up to 5 iterations before escalating."
 argument-hint: "<site-slug>"
 ---
 
@@ -10,10 +10,11 @@ The approved test suite from Phase B is the immutable behavioral contract — fi
 
 ### Skills Used (in order)
 
-1. `.claude/skills/PE-quality/playwright-behavioral-parity/SKILL.md` — run approved suite against new stack
-2. `.claude/skills/PE-quality/sonarqube-gate/SKILL.md` — code quality analysis and gate enforcement
-3. `.claude/skills/PE-quality/lighthouse-ci-gate/SKILL.md` — performance, accessibility, SEO gate
-4. `.claude/skills/PE-quality/ai-remediation-agent/SKILL.md` — AI patch generation for failing gates (max 5 iterations)
+1. `.claude/skills/PE-quality/frontend-visual-parity/SKILL.md` — **look-alike gate**: legacy vs new screenshots + content; remediate until pass
+2. `.claude/skills/PE-quality/playwright-behavioral-parity/SKILL.md` — run approved suite against new stack
+3. `.claude/skills/PE-quality/sonarqube-gate/SKILL.md` — code quality analysis and gate enforcement
+4. `.claude/skills/PE-quality/lighthouse-ci-gate/SKILL.md` — performance, accessibility, SEO gate
+5. `.claude/skills/PE-quality/ai-remediation-agent/SKILL.md` — AI patch generation for failing gates (max 5 iterations)
 
 Arguments: $ARGUMENTS
 
@@ -30,7 +31,30 @@ Arguments: $ARGUMENTS
 
 ---
 
-## Step 2 — Playwright Behavioral Parity
+## Step 2 — Frontend Visual Parity (look-alike gate)
+
+Follow `frontend-visual-parity` skill — **blocking** before other gates if P0 routes fail.
+
+```bash
+node scripts/quality/visual-parity-check.mjs <site-slug>
+```
+
+1. Captures **legacy** (WordPress `wordpressUrl`) and **new** (Next.js) full-page screenshots per route.
+2. Compares visible text + baseline `text.txt` where available.
+3. Writes `output/<site>/docs/VISUAL-PARITY-REPORT.md` and `test/reports/visual-parity.json`.
+
+**If the gate fails (exit 1):**
+
+- Open paired screenshots under `output/<site>/test/reports/visual-parity/<route>/`.
+- Fix layout, Tailwind, nav/footer, and CMS field mapping in `output/<site>/frontend/` — use `page-component-generator` + `frontend-design` skills.
+- **Never** hardcode WordPress copy or delete sections to pass.
+- Re-run the checker; repeat up to **5 iterations** (count toward remediation cap).
+
+Proceed to Step 3 only when visual parity passes (or human accepts documented exceptions at CHECKPOINT 4).
+
+---
+
+## Step 3 — Playwright Behavioral Parity
 
 Follow `playwright-behavioral-parity` skill:
 
@@ -50,14 +74,14 @@ After the run, produce analytics:
 | Pass rate (%)      |       |
 | Visual regressions |       |
 
-If all tests pass → proceed directly to Step 3.
-If any tests fail → record failures and continue to Step 5 (AI Remediation) after all gates are run.
+If all tests pass → proceed directly to Step 4.
+If any tests fail → record failures and continue to Step 6 (AI Remediation) after all gates are run.
 
 **Never modify test files to make them pass. Fix the implementation.**
 
 ---
 
-## Step 3 — SonarQube Code Quality Gate
+## Step 4 — SonarQube Code Quality Gate
 
 Follow `sonarqube-gate` skill against `output/<site>/frontend/`:
 
@@ -67,7 +91,7 @@ Follow `sonarqube-gate` skill against `output/<site>/frontend/`:
 
 ---
 
-## Step 4 — Lighthouse CI Performance Gate
+## Step 5 — Lighthouse CI Performance Gate
 
 Follow `lighthouse-ci-gate` skill against the running Next.js app:
 
@@ -77,17 +101,17 @@ Follow `lighthouse-ci-gate` skill against the running Next.js app:
 
 ---
 
-## Step 5 — CHECKPOINT 3: Gate Assessment
+## Step 6 — CHECKPOINT 3: Gate Assessment
 
 Assess all three gate results:
 
 **If ALL gates pass** → proceed to CHECKPOINT 4 (Step 7).
 
-**If ANY gate fails** → enter AI Remediation loop (Step 6).
+**If ANY gate fails** → enter AI Remediation loop (Step 7).
 
 ---
 
-## Step 6 — AI Remediation Loop (max 5 iterations)
+## Step 7 — AI Remediation Loop (max 5 iterations)
 
 Follow `ai-remediation-agent` skill for each failing gate:
 
@@ -104,6 +128,7 @@ Track per-gate iteration count. Report after each iteration:
 
 | Gate              | Status | Iteration |
 | ----------------- | ------ | --------- |
+| Visual parity     |        |           |
 | Playwright parity |        |           |
 | SonarQube         |        |           |
 | Lighthouse CI     |        |           |
@@ -123,7 +148,7 @@ After all gates pass (or max iterations reached), re-run the full Playwright sui
 
 ---
 
-## Step 7 — CHECKPOINT 4 (Pre-Deployment Sign-Off)
+## Step 8 — CHECKPOINT 4 (Pre-Deployment Sign-Off)
 
 **Pause** and present to the user:
 
@@ -145,7 +170,7 @@ Then ask:
 
 ---
 
-## Step 8 — Write DEPLOYMENT-READY.md
+## Step 9 — Write DEPLOYMENT-READY.md
 
 On approval, write `output/<site>/DEPLOYMENT-READY.md`:
 
@@ -162,6 +187,7 @@ On approval, write `output/<site>/DEPLOYMENT-READY.md`:
 
 | Gate              | Status | Key Metrics |
 | ----------------- | ------ | ----------- |
+| Visual parity     |        |             |
 | Playwright parity |        |             |
 | SonarQube         |        |             |
 | Lighthouse CI     |        |             |
@@ -198,8 +224,9 @@ Phase E is a standalone phase. When invoked as `/PE-quality`, it completes at `D
 Do not mark Phase E complete until all are true:
 
 - [ ] `CONTRACT.md` confirmed present before starting
+- [ ] Frontend visual parity gate passed (`visual-parity-check.mjs` exit 0)
+- [ ] `VISUAL-PARITY-REPORT.md` shows pass for P0 routes (screenshots on disk)
 - [ ] Playwright behavioral parity suite run against new stack
-- [ ] Visual regression comparison completed
 - [ ] SonarQube quality gate run
 - [ ] Lighthouse CI gate run for key routes
 - [ ] All failing gates entered AI remediation loop (max 5 iterations)

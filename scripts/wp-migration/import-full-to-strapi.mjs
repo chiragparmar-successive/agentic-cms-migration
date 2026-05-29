@@ -17,7 +17,7 @@ try { await fs.access(paths.normalizedFile); }
 catch { console.error(`Missing ${paths.normalizedFile}. Run generated output/<site>/wp-migration/run-full-migration.mjs first.`); process.exit(1); }
 
 try {
-  const { strapiUrl, strapiToken } = requireStrapiEnv();
+  const { strapiUrl, strapiToken } = await requireStrapiEnv({ migrationDir: config.migrationDir });
   const result = await runStrapiImport(config, { profileId: 'full', strapiUrl, strapiToken, skipCachedMedia: false });
   console.log('[import-full] OK');
   console.log('  id-map:', result.paths.idMapFile);

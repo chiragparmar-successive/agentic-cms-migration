@@ -16,6 +16,7 @@ Generate all pages, layouts, and components for the Next.js 15 App Router projec
 ## Precondition
 
 - CMS adapter generated (from `cms-adapter-generator`)
+- `output/<site>/frontend/.env.local` configured (URLs, token, site name/tagline; Strapi admin creds as commented lines)
 - Design references available (preferred: Phase A crawl; fallback: Phase B exploratory baseline)
 - Route inventory available (preferred: Phase A `site-crawler`; fallback: Phase B exploratory `index.json`)
 - Content Model Spec approved (CHECKPOINT 1)
@@ -228,6 +229,7 @@ Do not bypass this loop by weakening assertions or hardcoding content.
   - Visual parity notes for P0 routes (what matched / what diverged)
 - `output/<site>/docs/FRONTEND-CMS-WIRING.md` — per-route CMS adapter usage
 - `output/<site>/docs/VISUAL-PARITY-REPORT.md` — legacy URL vs new frontend comparison
+- `output/<site>/docs/FRONTEND-ENV.md` — env keys + runtime URLs (Strapi admin/GraphQL/frontend dev)
 
 ## Downstream
 

@@ -1,5 +1,5 @@
 ---
-description: "Phase E — Quality Loop: Run the approved Playwright behavioral parity suite, SonarQube code quality gate, and Lighthouse CI performance gate against the new stack, with AI self-healing up to 5 iterations before escalating."
+description: "Phase E — Quality Loop: Frontend visual look-alike gate (screenshots + content), Playwright parity, SonarQube, Lighthouse CI, with AI self-healing up to 5 iterations."
 argument-hint: "<site-slug>"
 ---
 
@@ -12,6 +12,7 @@ This command is the phase-level contract only.
 1. Command contract: `.claude/commands/PE-quality.md`
 2. Canonical agents map: `.claude/agents/PE-quality/AGENT.md`
 3. Skill implementation:
+   - `.claude/skills/PE-quality/frontend-visual-parity/SKILL.md`
    - `.claude/skills/PE-quality/playwright-behavioral-parity/SKILL.md`
    - `.claude/skills/PE-quality/sonarqube-gate/SKILL.md`
    - `.claude/skills/PE-quality/lighthouse-ci-gate/SKILL.md`

@@ -60,6 +60,8 @@ export function profilePaths(siteSlugOrConfig, profileId) {
     syncDir: path.join(base, 'sync'),
     idMapFile: path.join(base, 'sync/id-map.json'),
     logFile: path.join(base, 'sync/import-log.json'),
+    failedFile: path.join(base, 'sync/failed-imports.json'),
+    runLogFile: path.join(base, 'sync/migration-run.log'),
     analysisDir: path.join(root, 'analysis'),
     structureAnalysisFile: path.join(root, 'analysis/structure-analysis.json'),
     unknownBlocksFile: path.join(root, 'analysis/unknown-blocks.json'),

@@ -17,7 +17,7 @@ try { await fs.access(paths.normalizedFile); }
 catch { console.error(`Missing ${paths.normalizedFile}. Run wordpress-to-strapi.mjs first.`); process.exit(1); }
 
 try {
-  const { strapiUrl, strapiToken } = requireStrapiEnv();
+  const { strapiUrl, strapiToken } = await requireStrapiEnv({ migrationDir: config.migrationDir });
   const result = await runStrapiImport(config, { profileId: 'preview', strapiUrl, strapiToken });
   console.log('[import-preview] OK');
   console.log('  id-map:', result.paths.idMapFile);

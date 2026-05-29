@@ -42,8 +42,10 @@ Follow `nextjs-scaffolder` skill:
 
 - Initialise Next.js 15 project in `output/<site>/frontend/`
 - TypeScript strict mode, Tailwind CSS, App Router, React Server Components
-- Configure environment variables for Strapi API base URL and GraphQL endpoint
-- Document `.env.example` with required variables
+- Configure environment files: `.env.local.example` (committed) + `.env.local` (gitignored)
+- Store Strapi base URLs, GraphQL URL, API token, and site identity in env
+- Store Strapi admin email/password as **commented lines** in `.env.local` for local visibility (never hardcode in components)
+- Document keys in `output/<site>/docs/FRONTEND-ENV.md`
 - Enforce best-practice CMS folder layout for API calling:
   - `src/lib/cms/client.ts` (HTTP/GraphQL client)
   - `src/lib/cms/adapter.ts` (ICMSAdapter contract)
@@ -145,7 +147,8 @@ Do not mark Phase D complete until all are true:
 - [ ] TypeScript strict mode enabled
 - [ ] Tailwind CSS configured
 - [ ] App Router with RSC enabled
-- [ ] `.env.example` documents all required variables
+- [ ] `.env.local.example` + `.env.local` document all required variables (admin creds commented)
+- [ ] `FRONTEND-ENV.md` lists runtime URLs and env keys
 - [ ] CMS folder structure implemented under `src/lib/cms/` (client/adapter/strapi/queries/mappers/types)
 - [ ] `ICMSAdapter` interface generated
 - [ ] `StrapiAdapter` implementation wired and fetching live data
@@ -154,5 +157,6 @@ Do not mark Phase D complete until all are true:
 - [ ] Dynamic-data check passed (CMS mutation reflected on frontend)
 - [ ] `npm run build` succeeds with no blocking TypeScript errors
 - [ ] Route parity report written — no missing legacy routes
+- [ ] Initial `VISUAL-PARITY-REPORT.md` drafted (full gate runs in Phase E via `visual-parity-check.mjs`)
 - [ ] All artifacts confined to `output/<site>/frontend/`
 - [ ] Phase D stopped — Phase E was NOT triggered

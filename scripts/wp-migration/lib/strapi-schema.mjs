@@ -296,7 +296,7 @@ export async function generateStrapiSchemas(siteSlug) {
       generatedAt: new Date().toISOString(),
       siteSlug,
       schemaRoot: apiRoot,
-      note: "Restart Strapi after applying schemas. Partial: wordpress-to-strapi.mjs --import. Full data: output/<site>/wp-migration/run-full-migration.mjs --import.",
+      note: "Restart Strapi after applying schemas. Partial: wordpress-to-strapi.mjs --import. Full data: output/<site>/wp-migration/run-full-migration.mjs",
     },
     types: allTypes.map((t) => ({
       apiId: t.apiId,

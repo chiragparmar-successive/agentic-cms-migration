@@ -33,6 +33,7 @@ Skills are grouped by **phase** first, then by **skill name**. Entry point for e
     page-component-generator/SKILL.md
     route-validator/SKILL.md
   PE-quality/                          # Quality Loop (Self-Healing)
+    frontend-visual-parity/SKILL.md
     playwright-behavioral-parity/SKILL.md
     sonarqube-gate/SKILL.md
     lighthouse-ci-gate/SKILL.md

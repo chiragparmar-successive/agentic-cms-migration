@@ -13,6 +13,7 @@ Re-run the immutable test suite from Phase B against the new stack to verify beh
 
 ## Precondition
 
+- **Frontend visual parity gate passed** — `node scripts/quality/visual-parity-check.mjs <site-slug>` exit 0 (see `frontend-visual-parity` skill)
 - Phase D complete (Next.js app generated, routes validated)
 - Approved test suite from Phase B (CHECKPOINT 2) — tests must NOT be modified
 - New stack running: Next.js frontend + Strapi CMS
