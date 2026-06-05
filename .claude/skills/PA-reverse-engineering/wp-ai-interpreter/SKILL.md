@@ -40,6 +40,8 @@ Batch in groups of ≤10 blocks if the file is large.
 
 ### Step 2: Produce component suggestions
 
+**Decomposition-first:** for messy HTML blocks, do not suggest a single `richtext` field as the mapping by default. Analyze the block's structure — if it contains distinct elements (heading, subtext, image, button, repeated items), suggest a component with one typed field per element. Suggest `richtext` only for parts that are genuine flowing prose. Strapi structure should be ideal, not a mirror of the WordPress HTML blob.
+
 For each unknown block, infer:
 
 - `component` name (PascalCase, stable naming — reuse names for identical layouts)

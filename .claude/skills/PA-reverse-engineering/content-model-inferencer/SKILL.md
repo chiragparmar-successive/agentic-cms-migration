@@ -37,6 +37,25 @@ For each identified type, define:
 - Component composition (which components belong to which types)
 - Data dependencies (which types must be populated first)
 
+#### HTML Decomposition Rule (mandatory — Strapi-first modeling)
+
+**Never map source HTML blobs (WordPress `post_content`, page-builder output, ACF wysiwyg) directly to a single `bodyHtml`/`richtext` field by default.** WordPress stores everything as one HTML string; Strapi's ideal model is structured fields, components, and dynamic zones. Model the content as if designing Strapi from scratch — do not impose WordPress's storage shape onto Strapi.
+
+For every HTML body encountered, analyze its internal structure first:
+
+1. **Decompose when structure exists.** If the HTML contains distinct semantic sections or repeated patterns, break it into dedicated fields/components:
+   - Hero/banner markup (h1 + subtitle + image + button) → `Hero` component with `heading`, `subheading`, `image`, `cta` fields
+   - Repeated card/list patterns (features, services, team, testimonials, FAQs) → repeatable component or separate collection type
+   - CTA blocks → `CtaStrip` component (`heading`, `buttonText`, `buttonUrl`)
+   - Image galleries/sliders → `media` (multiple) or `Gallery` component
+   - Embedded videos, quotes, stats, accordions → typed components
+   - Mixed-section pages (typical WP pages) → `dynamiczone` composed of the above components
+2. **Keep rich text only when it is genuinely prose.** Flowing article/blog body copy (paragraphs, inline headings, inline images that are part of the narrative) stays a single `richtext` field — decomposing prose would harm authoring.
+3. **Hybrid is common and correct.** A blog post may be `title` + `excerpt` + `coverImage` + `richtext body`; a marketing page is usually a `dynamiczone` of components with little or no raw rich text.
+4. **Decision test:** would a content editor want to edit this piece as a distinct field in the Strapi admin (and would the frontend render it as a distinct element)? If yes → its own field/component. If it's only meaningful as flowing copy → rich text.
+
+Record every decomposition decision (and every "kept as rich text" decision with its justification) in the Field Inventory `Notes` column so CHECKPOINT 1 reviewers can audit the modeling.
+
 ### Step 3: Produce Content Model Spec
 
 Create `output/<site>/docs/content-model/SCHEMA-DESIGN.md` with:

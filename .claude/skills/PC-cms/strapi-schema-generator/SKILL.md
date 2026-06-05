@@ -114,6 +114,15 @@ export default factories.createCoreService('api::<type>.<type>');
 | Component | `component` |
 | Dynamic Zone | `dynamiczone` |
 
+### Step 6: HTML-Blob Guard (mandatory)
+
+Reject schemas that mirror WordPress storage instead of ideal Strapi structure:
+
+- **No monolithic `bodyHtml`/`content` richtext field** as the primary content carrier for a type, unless the approved spec explicitly justifies it as genuine flowing prose (e.g., blog post body).
+- If the spec decomposed source HTML into fields/components/dynamic zones, the generated schema must contain those structured attributes — never collapse them back into one richtext field for convenience.
+- Page-like types built from mixed sections should use `dynamiczone` with typed components (hero, feature grid, CTA, gallery, etc.), not a single rich text dump.
+- If a spec entry looks like an undecomposed WordPress blob (single richtext field with no justification note), flag it and return to `content-model-inferencer` rather than generating the schema as-is.
+
 ## Output Contract
 
 - Schema files for all content types in `output/<site>/cms/src/api/`
