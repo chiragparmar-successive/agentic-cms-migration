@@ -36,6 +36,7 @@ If missing, stop and ask exactly:
    - common engine: `scripts/wp-migration/*`
    - project-specific: `output/<site>/wp-migration/*` (config, preview data, analysis)
 8. Schema inference happens in Phase W; **content load** uses Phase C `content-etl-pipeline` only.
+9. **Strapi-first modeling (forget the WordPress shape).** Never carry WordPress's storage shape into Strapi. Do not map `post_content`/page-builder/ACF wysiwyg HTML to a single `bodyHtml`/`richtext` blob by default. Model content as if designing Strapi from scratch — decompose HTML into typed fields, components, and dynamic zones; keep `richtext` only for genuine flowing prose (e.g., a blog article body). This rule binds Phase W (inference + schema) and Phase C (ETL load): both must produce/populate the structured model, never an undecomposed HTML dump. Enforced by `content-model-inferencer`, `strapi-schema-generator`, and `content-etl-pipeline`; every decomposition (and every "kept as rich text" justification) is reviewed at CHECKPOINT WP-1.
 
 ## Runtime modes
 
@@ -53,8 +54,8 @@ If missing, stop and ask exactly:
 2. **Create CMS foundation (Strapi project/bootstrap)**  
    Create/configure CMS runtime and roles/permissions for the target project.
 
-3. **Generate schema from WordPress structure (AI + deterministic analysis)**  
-   Use extracted/normalized/detected WordPress structure to infer content model and generate Strapi schema.
+3. **Infer an ideal Strapi content model (AI + deterministic analysis)**  
+   Use extracted/normalized/detected WordPress data as *input signal only* — do not mirror its storage shape. Decompose HTML bodies into typed fields, components, and dynamic zones (see hard rule 9), then generate the Strapi schema from that ideal model.
 
 4. **Apply schema to CMS + validate GraphQL/types**  
    Apply generated schema to Strapi, restart CMS, and validate GraphQL/types/contracts.
@@ -177,7 +178,7 @@ Expected outputs:
 
 ### CHECKPOINT WP-1
 
-Present schema + mapping summary and wait for explicit approval before schema apply.
+Present schema + mapping summary and wait for explicit approval before schema apply. The summary must call out **HTML decomposition decisions** (hard rule 9): which WordPress HTML bodies became typed fields / components / dynamic zones, and which were deliberately kept as `richtext` with justification. Reject and return to `content-model-inferencer` if any type is modeled as an undecomposed `bodyHtml`/`richtext` blob without justification.
 
 ### Post-W handoff (required)
 

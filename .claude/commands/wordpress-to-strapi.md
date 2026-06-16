@@ -17,6 +17,8 @@ This is the only canonical entrypoint for initial project bootstrapping.
 
 ### Agent
 
+update
+
 - `.claude/agents/wordpress-to-strapi/AGENT.md`
 
 ### Arguments
@@ -28,6 +30,10 @@ Site slug must be derived dynamically from the provided URL hostname (lowercase,
 ### Flow
 
 `W -> C (ETL) -> B -> D -> E` — see `.claude/agents/wordpress-to-strapi/AGENT.md`
+
+### Modeling rule (Strapi-first)
+
+Do **not** copy the WordPress storage shape into Strapi. Never map `post_content`/page-builder/ACF wysiwyg HTML to a single `bodyHtml`/`richtext` blob by default. Forget the WordPress structure and model content as if designing Strapi from scratch — decompose HTML into typed fields, components, and dynamic zones; keep `richtext` only for genuine flowing prose (e.g., a blog article body). This is hard rule 9 in `AGENT.md` and is reviewed at CHECKPOINT WP-1.
 
 If the URL is missing, stop and ask exactly:
 
