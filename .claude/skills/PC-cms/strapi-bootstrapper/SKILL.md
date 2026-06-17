@@ -91,6 +91,17 @@ export default ({ env }) => ({
 Create `.env` with auto-generated keys.
 If port 1337 is occupied, use an alternative and update all references.
 
+Write the **default-created admin credentials** into the CMS `output/<site>/cms/.env` (the same values used to seed the first admin and recorded in `strapi-runtime.json`) so the local login is discoverable from the project env:
+
+```env
+# Admin (default created at bootstrap — local dev only)
+STRAPI_ADMIN_EMAIL=<email-used-at-bootstrap>
+STRAPI_ADMIN_PASSWORD=<password-used-at-bootstrap>
+STRAPI_ADMIN_URL=http://localhost:<port>/admin
+```
+
+These go in **uncommented** in the CMS `.env` (local-only — `.env` must stay gitignored, never committed). If no explicit credentials were supplied at bootstrap, use the defaults `admin@local.test` / `Admin12345!` and record them identically in `strapi-runtime.json` and the CMS `.env`. The frontend `.env.local` keeps the same three keys as **commented** placeholders for visibility only (next step).
+
 After first admin user is created (UI registration or bootstrap script), sync runtime values into frontend env:
 
 1. Update `output/<site>/frontend/.env.local` (create from `.env.local.example` if missing)
